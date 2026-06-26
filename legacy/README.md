@@ -1,44 +1,57 @@
-# Aerolinea (Legacy)
+# ✈️ Aerolinea Legacy
 
-Versión original desarrollada en abril de 2018 para la asignatura:
+Versión legacy del sistema de aerolínea desarrollado originalmente en abril de 2018 para la asignatura **Estructuras de Datos (SOF-012)** del **Instituto Tecnológico de Las Américas (ITLA)**.
 
-**Estructuras de Datos (SOF-012)**  
-Instituto Tecnológico de Las Américas (ITLA)
-
-## Integrantes
+## 👨‍💻 Integrantes
 
 - Francis Jairo Matías Rosario — 2015-2984
 - Jorge de Jesús Torres Pérez — 2016-3515
 - Sebastian Donastor Hernández — 2016-3607
 
-## Profesor
+## 🎓 Profesor
 
-Raydelto Hernández Perera
+Raydelto Hernández
 
-## Tecnologías
+## 🧰 Tecnologías
 
 - C++
-- Listas enlazadas
 - Code::Blocks
+- Listas enlazadas
 - Programación estructurada
 
-## Descripción
-
-Sistema básico de rutas aéreas implementado mediante listas enlazadas.
-
-Permite:
+## 📌 Funcionalidades
 
 - Registrar destinos
-- Consultar rutas
-- Calcular cantidad de vuelos entre destinos
-- Visualizar trayectos disponibles
+- Calcular cantidad de vuelos entre dos destinos
+- Buscar ruta entre origen y destino
+- Listar destinos registrados
+- Listar rutas registradas
 
-## Nota
+## 🔧 Correcciones realizadas
 
-El código fuente fue preservado con fines históricos y académicos. Se realizaron correcciones menores de estabilidad para facilitar su compilación en entornos modernos.
+- Eliminación de fugas de memoria por uso innecesario de `new`
+- Destructor para liberar la lista enlazada
+- Mejor manejo de entradas con `getline`
+- Opción para salir del sistema
+- Validaciones de origen y destino
+- Menú de consola más claro
+- Separación del código en archivos `.h` y `.cpp`
+- Compatibilidad mejorada con compiladores modernos
 
-La versión modernizada del proyecto se encuentra en:
+## ▶️ Ejecución
+
+Abrir `prueba.cbp` en Code::Blocks y compilar el proyecto.
+
+También puede compilarse desde terminal:
+
+```bash
+g++ main.cpp paises.cpp -o AerolineaLegacy
+```
+
+## 📚 Nota
+
+Esta carpeta conserva la versión histórica del proyecto. La versión modernizada con Qt 6 y SQL Server se encuentra en:
 
 ```text
-modern-qt-sqlserver/
+../modern-qt-sqlserver/
 ```
