@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+      <img src="https://img.shields.io/badge/ITLA-2018--C1-0057B8?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Qt-6-41CD52?style=for-the-badge&logo=qt&logoColor=white" />
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
   <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" />
