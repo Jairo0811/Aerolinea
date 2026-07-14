@@ -31,17 +31,21 @@ string leerTexto(const string& mensaje)
 
 void cargarDestinosIniciales(Paises& paises)
 {
-    paises.introducirDestino("miami");
-    paises.introducirDestino("orlando");
-    paises.introducirDestino("santo domingo");
-    paises.introducirDestino("san francisco");
+    paises.introducirDestino("Miami");
+    paises.introducirDestino("Orlando");
+    paises.introducirDestino("Santo Domingo");
+    paises.introducirDestino("San Francisco");
 }
 
-void mostrarEncabezado()
+void mostrarEncabezado(const Paises& paises)
 {
     cout << "=====================================\n";
-    cout << "              AEROLINEA              \n";
+    cout << "           AEROLINEA (Legacy)        \n";
     cout << "=====================================\n";
+    cout << "Destinos registrados: "
+         << paises.cantidadDestinos()
+         << "\n";
+    cout << "=====================================\n\n";
 }
 
 int main()
@@ -51,71 +55,108 @@ int main()
 
     string opcion;
 
-    do {
+    do
+    {
         limpiarPantalla();
-        mostrarEncabezado();
+        mostrarEncabezado(paises);
 
         cout << "1. Introducir destino\n";
         cout << "2. Calcular cantidad de vuelos\n";
         cout << "3. Buscar ruta\n";
         cout << "4. Listar destinos\n";
         cout << "5. Listar rutas\n";
-        cout << "0. Salir\n";
+        cout << "0. Salir\n\n";
+
         cout << "Seleccione una opcion: ";
 
         getline(cin, opcion);
+
         limpiarPantalla();
 
-        if (opcion == "1") {
-            mostrarEncabezado();
+        if (opcion == "1")
+        {
+            mostrarEncabezado(paises);
+
             string destino = leerTexto("Ingrese el nuevo destino: ");
-            paises.introducirDestino(destino);
-            cout << "\nDestino agregado correctamente.\n";
+
+            if (paises.introducirDestino(destino))
+            {
+                cout << "\nDestino agregado correctamente.\n";
+            }
+            else
+            {
+                cout << "\nEl destino ya existe o el nombre es invalido.\n";
+            }
+
             pausar();
         }
-        else if (opcion == "2") {
-            mostrarEncabezado();
+        else if (opcion == "2")
+        {
+            mostrarEncabezado(paises);
+
             string origen = leerTexto("Ingrese el origen: ");
             string destino = leerTexto("Ingrese el destino: ");
 
             int vuelos = paises.contarVuelos(origen, destino);
 
-            if (vuelos == -1) {
+            if (vuelos == -1)
+            {
                 cout << "\nNo existe una ruta valida entre esos destinos.\n";
-            } else {
-                cout << "\nEsta a " << vuelos << " vuelo(s) de llegar a su destino.\n";
+            }
+            else if (vuelos == 0)
+            {
+                cout << "\nYa se encuentra en ese destino.\n";
+            }
+            else
+            {
+                cout << "\nEsta a "
+                     << vuelos
+                     << " vuelo(s) de llegar a su destino.\n";
             }
 
             pausar();
         }
-        else if (opcion == "3") {
-            mostrarEncabezado();
+        else if (opcion == "3")
+        {
+            mostrarEncabezado(paises);
+
             string origen = leerTexto("Ingrese el origen: ");
             string destino = leerTexto("Ingrese el destino: ");
 
-            cout << "\nRuta encontrada:\n";
+            cout << "\n";
             cout << paises.buscarRuta(origen, destino) << endl;
+
             pausar();
         }
-        else if (opcion == "4") {
-            mostrarEncabezado();
+        else if (opcion == "4")
+        {
+            mostrarEncabezado(paises);
+
             paises.listarDestinos();
+
             pausar();
         }
-        else if (opcion == "5") {
-            mostrarEncabezado();
+        else if (opcion == "5")
+        {
+            mostrarEncabezado(paises);
+
             paises.listarRutas();
+
             pausar();
         }
-        else if (opcion == "0") {
-            cout << "\nSaliendo del sistema...\n";
+        else if (opcion == "0")
+        {
+            cout << "\nGracias por utilizar Aerolinea.\n";
         }
-        else {
+        else
+        {
             cout << "\nOpcion invalida.\n";
+
             pausar();
         }
 
-    } while (opcion != "0");
+    }
+    while (opcion != "0");
 
     return 0;
 }

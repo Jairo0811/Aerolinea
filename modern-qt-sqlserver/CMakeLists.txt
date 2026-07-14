@@ -19,6 +19,20 @@ qt_add_executable(AerolineaCPP
     aeronave.h aeronave.cpp
     resources.qrc
 )
+
+if(WIN32)
+    target_sources(AerolineaCPP PRIVATE app_icon.rc)
+endif()
+
+add_custom_command(TARGET AerolineaCPP POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:AerolineaCPP>/config"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/config"
+            "$<TARGET_FILE_DIR:AerolineaCPP>/config"
+    COMMENT "Copiando configuración de base de datos"
+)
+
 qt_add_translations(
     TARGETS AerolineaCPP
     TS_FILES AerolineaCPP_es_DO.ts

@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>itla_logo.png</file>
+        <file>aerolineacpp_logo.png</file>
+        <file>aerolineacpp.ico</file>
     </qresource>
 </RCC>

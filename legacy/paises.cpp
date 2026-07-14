@@ -1,11 +1,58 @@
 #include "paises.h"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 
 using namespace std;
 
+string Paises::limpiarEspacios(const string& texto)
+{
+    const auto inicio = find_if(
+        texto.begin(),
+        texto.end(),
+        [](unsigned char caracter)
+        {
+            return !isspace(caracter);
+        }
+    );
+
+    if (inicio == texto.end()) {
+        return "";
+    }
+
+    const auto fin = find_if(
+        texto.rbegin(),
+        texto.rend(),
+        [](unsigned char caracter)
+        {
+            return !isspace(caracter);
+        }
+    ).base();
+
+    return string(inicio, fin);
+}
+
+string Paises::normalizar(const string& texto)
+{
+    string resultado = limpiarEspacios(texto);
+
+    transform(
+        resultado.begin(),
+        resultado.end(),
+        resultado.begin(),
+        [](unsigned char caracter)
+        {
+            return static_cast<char>(tolower(caracter));
+        }
+    );
+
+    return resultado;
+}
+
 Paises::Paises()
-    : cabeza(nullptr), cola(nullptr)
+    : cabeza(nullptr),
+      cola(nullptr)
 {
 }
 
@@ -15,18 +62,28 @@ Paises::~Paises()
 
     while (actual != nullptr) {
         Nodo* siguiente = actual->siguiente;
+
         delete actual;
         actual = siguiente;
     }
+
+    cabeza = nullptr;
+    cola = nullptr;
 }
 
-void Paises::introducirDestino(const string& pais)
+bool Paises::introducirDestino(const string& pais)
 {
-    if (pais.empty()) {
-        return;
+    const string paisLimpio = limpiarEspacios(pais);
+
+    if (paisLimpio.empty()) {
+        return false;
     }
 
-    Nodo* nuevo = new Nodo(pais);
+    if (existeDestino(paisLimpio)) {
+        return false;
+    }
+
+    Nodo* nuevo = new Nodo(paisLimpio);
 
     if (cabeza == nullptr) {
         cabeza = nuevo;
@@ -35,135 +92,152 @@ void Paises::introducirDestino(const string& pais)
         cola->siguiente = nuevo;
         cola = nuevo;
     }
+
+    return true;
 }
 
 bool Paises::existeDestino(const string& pais) const
 {
-    Nodo* temp = cabeza;
+    const string paisNormalizado = normalizar(pais);
 
-    while (temp != nullptr) {
-        if (temp->nombre == pais) {
+    if (paisNormalizado.empty()) {
+        return false;
+    }
+
+    Nodo* actual = cabeza;
+
+    while (actual != nullptr) {
+        if (normalizar(actual->nombre) == paisNormalizado) {
             return true;
         }
 
-        temp = temp->siguiente;
+        actual = actual->siguiente;
     }
 
     return false;
 }
 
-bool Paises::tieneOrigenYDestino(const string& origen, const string& destino) const
+bool Paises::tieneOrigenYDestino(
+    const string& origen,
+    const string& destino
+) const
 {
     return existeDestino(origen) && existeDestino(destino);
 }
 
-int Paises::contarVuelos(const string& origen, const string& destino) const
+int Paises::cantidadDestinos() const
+{
+    int cantidad = 0;
+    Nodo* actual = cabeza;
+
+    while (actual != nullptr) {
+        ++cantidad;
+        actual = actual->siguiente;
+    }
+
+    return cantidad;
+}
+
+int Paises::contarVuelos(
+    const string& origen,
+    const string& destino
+) const
 {
     if (!tieneOrigenYDestino(origen, destino)) {
         return -1;
     }
 
-    if (origen == destino) {
+    const string origenNormalizado = normalizar(origen);
+    const string destinoNormalizado = normalizar(destino);
+
+    if (origenNormalizado == destinoNormalizado) {
         return 0;
     }
 
-    Nodo* temp = cabeza;
-    bool contando = false;
-    int vuelos = 0;
+    Nodo* actual = cabeza;
 
-    while (temp != nullptr) {
-        if (temp->nombre == origen) {
-            contando = true;
-        }
-
-        if (contando && temp->siguiente != nullptr) {
-            vuelos++;
-
-            if (temp->siguiente->nombre == destino) {
-                return vuelos;
-            }
-        }
-
-        temp = temp->siguiente;
+    while (
+        actual != nullptr &&
+        normalizar(actual->nombre) != origenNormalizado
+    ) {
+        actual = actual->siguiente;
     }
 
-    // Ruta circular: el último destino conecta con el primero.
-    if (contando && cola != nullptr && cabeza != nullptr) {
-        vuelos++;
+    if (actual == nullptr) {
+        return -1;
+    }
 
-        if (cabeza->nombre == destino) {
+    const int totalDestinos = cantidadDestinos();
+    int vuelos = 0;
+
+    for (int i = 0; i < totalDestinos; ++i) {
+        Nodo* siguiente = actual->siguiente;
+
+        if (siguiente == nullptr) {
+            siguiente = cabeza;
+        }
+
+        ++vuelos;
+
+        if (normalizar(siguiente->nombre) == destinoNormalizado) {
             return vuelos;
         }
 
-        temp = cabeza;
-
-        while (temp != nullptr && temp->nombre != origen) {
-            if (temp->siguiente != nullptr) {
-                vuelos++;
-
-                if (temp->siguiente->nombre == destino) {
-                    return vuelos;
-                }
-            }
-
-            temp = temp->siguiente;
-        }
+        actual = siguiente;
     }
 
     return -1;
 }
 
-string Paises::buscarRuta(const string& origen, const string& destino) const
+string Paises::buscarRuta(
+    const string& origen,
+    const string& destino
+) const
 {
     if (!tieneOrigenYDestino(origen, destino)) {
         return "El origen o el destino ingresado no existe.";
     }
 
-    if (origen == destino) {
+    const string origenNormalizado = normalizar(origen);
+    const string destinoNormalizado = normalizar(destino);
+
+    if (origenNormalizado == destinoNormalizado) {
         return "Ya estas en ese destino.";
     }
 
-    string ruta;
-    Nodo* temp = cabeza;
-    bool construyendo = false;
+    Nodo* actual = cabeza;
 
-    while (temp != nullptr) {
-        if (temp->nombre == origen) {
-            construyendo = true;
-        }
-
-        if (construyendo && temp->siguiente != nullptr) {
-            ruta += temp->nombre + " -> " + temp->siguiente->nombre + "\n";
-
-            if (temp->siguiente->nombre == destino) {
-                return ruta;
-            }
-        }
-
-        temp = temp->siguiente;
+    while (
+        actual != nullptr &&
+        normalizar(actual->nombre) != origenNormalizado
+    ) {
+        actual = actual->siguiente;
     }
 
-    // Ruta circular: el último destino conecta con el primero.
-    if (construyendo && cola != nullptr && cabeza != nullptr) {
-        ruta += cola->nombre + " -> " + cabeza->nombre + "\n";
+    if (actual == nullptr) {
+        return "No se encontro una ruta disponible.";
+    }
 
-        if (cabeza->nombre == destino) {
+    string ruta;
+    const int totalDestinos = cantidadDestinos();
+
+    for (int i = 0; i < totalDestinos; ++i) {
+        Nodo* siguiente = actual->siguiente;
+
+        if (siguiente == nullptr) {
+            siguiente = cabeza;
+        }
+
+        ruta += actual->nombre;
+        ruta += " -> ";
+        ruta += siguiente->nombre;
+        ruta += "\n";
+
+        if (normalizar(siguiente->nombre) == destinoNormalizado) {
             return ruta;
         }
 
-        temp = cabeza;
-
-        while (temp != nullptr && temp->nombre != origen) {
-            if (temp->siguiente != nullptr) {
-                ruta += temp->nombre + " -> " + temp->siguiente->nombre + "\n";
-
-                if (temp->siguiente->nombre == destino) {
-                    return ruta;
-                }
-            }
-
-            temp = temp->siguiente;
-        }
+        actual = siguiente;
     }
 
     return "No se encontro una ruta disponible.";
@@ -171,28 +245,55 @@ string Paises::buscarRuta(const string& origen, const string& destino) const
 
 void Paises::listarDestinos() const
 {
-    Nodo* temp = cabeza;
+    if (cabeza == nullptr) {
+        cout << "\nNo hay destinos registrados.\n";
+        return;
+    }
 
-    cout << "\nDestinos registrados:\n";
+    cout << "\nDestinos registrados ("
+         << cantidadDestinos()
+         << "):\n";
 
-    while (temp != nullptr) {
-        cout << "- " << temp->nombre << endl;
-        temp = temp->siguiente;
+    Nodo* actual = cabeza;
+    int numero = 1;
+
+    while (actual != nullptr) {
+        cout << numero << ". " << actual->nombre << '\n';
+
+        ++numero;
+        actual = actual->siguiente;
     }
 }
 
 void Paises::listarRutas() const
 {
-    Nodo* temp = cabeza;
+    if (cabeza == nullptr) {
+        cout << "\nNo hay rutas registradas.\n";
+        return;
+    }
+
+    if (cabeza == cola) {
+        cout << "\nSolo existe un destino registrado.\n";
+        return;
+    }
 
     cout << "\nRutas registradas:\n";
 
-    while (temp != nullptr && temp->siguiente != nullptr) {
-        cout << "- " << temp->nombre << " -> " << temp->siguiente->nombre << endl;
-        temp = temp->siguiente;
+    Nodo* actual = cabeza;
+
+    while (actual != nullptr && actual->siguiente != nullptr) {
+        cout << "- "
+             << actual->nombre
+             << " -> "
+             << actual->siguiente->nombre
+             << '\n';
+
+        actual = actual->siguiente;
     }
 
-    if (cola != nullptr && cabeza != nullptr && cola != cabeza) {
-        cout << "- " << cola->nombre << " -> " << cabeza->nombre << endl;
-    }
+    cout << "- "
+         << cola->nombre
+         << " -> "
+         << cabeza->nombre
+         << '\n';
 }

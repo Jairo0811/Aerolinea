@@ -1,13 +1,13 @@
 #ifndef DATABASEMANAGER_H
 #define DATABASEMANAGER_H
 
+#include <QSqlDatabase>
 #include <QString>
 #include <QStringList>
-#include <QSqlDatabase>
 #include <QVector>
 
-#include "ruta.h"
 #include "aeronave.h"
+#include "ruta.h"
 #include "vuelo.h"
 
 class DatabaseManager
@@ -21,7 +21,7 @@ public:
     QVector<Ruta> obtenerRutas();
     QVector<Aeronave> obtenerAeronaves();
     QVector<Vuelo> obtenerVuelos();
-Vuelo obtenerVueloPorRutaId(int rutaId);
+    Vuelo obtenerVueloPorRutaId(int rutaId);
 
     int contarDestinos();
     int contarRutas();
@@ -29,6 +29,9 @@ Vuelo obtenerVueloPorRutaId(int rutaId);
     int contarVuelos();
 
 private:
+    QString obtenerRutaConfiguracion() const;
+    QString construirCadenaConexion() const;
+
     QSqlDatabase db;
 };
 

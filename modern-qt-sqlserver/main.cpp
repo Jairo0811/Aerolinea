@@ -1,23 +1,22 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QLocale>
-#include <QTranslator>
+#include <QIcon>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QApplication application(argc, argv);
 
-    QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "AerolineaCPP_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
-            a.installTranslator(&translator);
-            break;
-        }
-    }
-    MainWindow w;
-    w.show();
-    return QApplication::exec();
+    application.setApplicationName("AerolineaCPP");
+    application.setApplicationDisplayName("AerolineaCPP - Sistema de Rutas");
+    application.setApplicationVersion("1.0.0");
+    application.setOrganizationName("JM Software Solutions");
+    application.setOrganizationDomain("github.com/Jairo0811");
+
+    application.setWindowIcon(QIcon(":/aerolineacpp_logo.png"));
+
+    MainWindow window;
+    window.show();
+
+    return application.exec();
 }

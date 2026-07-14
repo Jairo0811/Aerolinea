@@ -1,49 +1,115 @@
 # ✈️ Aerolinea
 
-Sistema de aerolínea desarrollado originalmente como **proyecto final** de la asignatura **Estructuras de Datos (SOF-012)** durante el **cuatrimestre 2018-C1** del **Instituto Tecnológico de Las Américas (ITLA)**.
-
-Este repositorio conserva la **versión original desarrollada en C++ para consola** y una **modernización realizada en junio de 2026**, incorporando una interfaz gráfica con Qt, SQL Server y una arquitectura orientada a objetos.
-
----
-
-# 🚀 Tecnologías
-
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=cpp,qt,cmake" />
+  <img src="modern-qt-sqlserver/aerolineacpp_logo.png" width="220" alt="AerolineaCPP Logo">
 </p>
 
-### 🛠️ Tecnologías adicionales
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=cpp,qt,cmake,git,github" />
+</p>
 
-- 🗄️ Microsoft SQL Server
-- 🔌 ODBC Driver 17
-- 🖥️ Qt Widgets
-- 📐 Programación Orientada a Objetos (POO)
+<p align="center">
+  <img src="https://img.shields.io/badge/Qt-6-41CD52?style=for-the-badge&logo=qt&logoColor=white" />
+  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" />
+  <img src="https://img.shields.io/badge/CMake-Build-064F8C?style=for-the-badge&logo=cmake&logoColor=white" />
+</p>
+
+<p align="center">
+<strong>C++ · Qt 6 Widgets · SQL Server · CMake · Object-Oriented Programming</strong>
+</p>
 
 ---
 
-# 👨‍💻 Proyecto Original (2018-C1)
+# 📌 Descripción
 
-### Integrantes
+**Aerolinea** es un sistema para la gestión de rutas aéreas desarrollado originalmente como **proyecto final** de la asignatura **Estructuras de Datos (SOF-012)** durante el **cuatrimestre 2018-C1** del **Instituto Tecnológico de Las Américas (ITLA)**.
 
-- **Francis Jairo Matías Rosario** — 2015-2984
-- **Jorge de Jesús Torres Pérez** — 2016-3515
-- **Sebastian Donastor Hernández** — 2016-3607
+Ocho años después, el proyecto fue **restaurado y modernizado** con el propósito de preservar el trabajo académico original y demostrar su evolución mediante tecnologías actuales como **Qt 6**, **Microsoft SQL Server**, **CMake** y una arquitectura orientada a objetos.
 
-### 🎓 Institución
+El repositorio conserva ambas versiones:
 
-**Instituto Tecnológico de Las Américas (ITLA)**
+- 🕰️ **Legacy (2018-C1)** — Aplicación original de consola.
+- 🚀 **Modern Qt + SQL Server (2026)** — Aplicación de escritorio moderna.
 
-### 📚 Asignatura
+---
 
-**Estructuras de Datos (SOF-012)**
+# 🎓 Información académica original
 
-### 👨‍🏫 Profesor
+| Dato | Información |
+|------|-------------|
+| 🏛️ Institución | Instituto Tecnológico de Las Américas (ITLA) |
+| 📚 Asignatura | Estructuras de Datos |
+| 🧾 Código | SOF-012 |
+| 👨‍🏫 Profesor | Raydelto Hernández Perera |
+| 📅 Período | 2018-C1 |
+| 👥 Modalidad | Proyecto Final Grupal |
 
-**Raydelto Hernández Perera**
+## 👥 Integrantes del proyecto original
 
-### 📅 Período académico
+| Integrante | Matrícula |
+|------------|-----------|
+| Francis Jairo Matías Rosario | 2015-2984 |
+| Jorge de Jesús Torres Pérez | 2016-3515 |
+| Sebastian Donastor Hernández | 2016-3607 |
 
-**2018-C1**
+---
+
+# 📖 Historia del proyecto
+
+El proyecto nació como una aplicación desarrollada completamente en **C++ para consola**, implementando estructuras de datos mediante listas enlazadas.
+
+En **2026** fue restaurado y modernizado manteniendo la lógica principal, pero incorporando tecnologías actuales para convertirlo en una aplicación de escritorio con persistencia de datos y una arquitectura más mantenible.
+
+La versión moderna incluye nuevas funcionalidades que no existían en el proyecto original, sin perder la esencia del desarrollo académico realizado durante el período **2018-C1**.
+
+---
+
+# 🎯 Objetivo
+
+Demostrar la evolución de un proyecto académico hacia una solución moderna mediante la incorporación de:
+
+- 🖼️ Interfaz gráfica con Qt 6.
+- 🗄️ Persistencia de datos con SQL Server.
+- 📐 Arquitectura orientada a objetos.
+- 🏗️ Organización modular del código.
+- 🔍 Consultas dinámicas.
+- 📈 Mayor escalabilidad y mantenibilidad.
+
+---
+
+# 🏗️ Arquitectura
+
+```text
+                    AerolineaCPP
+
+                Qt 6 Widgets (GUI)
+                        │
+                        ▼
+                  MainWindow
+                        │
+        ┌───────────────┼───────────────┐
+        │                               │
+        ▼                               ▼
+   RutaManager                 DatabaseManager
+        │                               │
+        ▼                               ▼
+Ruta - Vuelo - Destino - Aeronave    SQL Server
+```
+
+---
+
+# 🛠️ Tecnologías utilizadas
+
+| Tecnología | Uso dentro del proyecto |
+|------------|-------------------------|
+| ⚙️ C++ | Lenguaje principal |
+| 🖼️ Qt 6 Widgets | Interfaz gráfica |
+| 🗄️ Microsoft SQL Server | Persistencia de datos |
+| 🔌 ODBC Driver 17 | Conexión con SQL Server |
+| 🏗️ CMake | Sistema de compilación |
+| 📐 Programación Orientada a Objetos | Arquitectura del proyecto |
+| 🧬 Git / GitHub | Control de versiones |
 
 ---
 
@@ -56,7 +122,10 @@ Aerolinea/
 │   └── Proyecto original desarrollado en C++ para consola (2018-C1)
 │
 ├── modern-qt-sqlserver/
-│   └── Modernización con Qt 6 + SQL Server (2026)
+│   ├── Código fuente Qt
+│   ├── Aerolinea.sql
+│   ├── resources.qrc
+│   └── CMakeLists.txt
 │
 ├── README.md
 └── .gitignore
@@ -66,59 +135,50 @@ Aerolinea/
 
 # 🕰️ Legacy
 
-La carpeta **legacy** contiene el proyecto original desarrollado durante el **cuatrimestre 2018-C1**.
+La carpeta **legacy** conserva la versión original del proyecto académico.
 
 ### Características
 
-- 📋 Gestión básica de destinos
-- 🔗 Implementación mediante listas enlazadas
-- 🖥️ Aplicación de consola
-- 📚 Proyecto académico original del ITLA
-- 🔧 Código corregido para mejorar estabilidad y compatibilidad con compiladores actuales
+- 📋 Gestión básica de destinos.
+- 🔗 Implementación mediante listas enlazadas.
+- 🖥️ Aplicación de consola.
+- 📚 Proyecto original del ITLA.
+- 🔧 Código restaurado para mejorar estabilidad y compatibilidad con compiladores actuales.
 
 ---
 
 # ⚡ Modern Qt + SQL Server
 
-La carpeta **modern-qt-sqlserver** contiene una modernización completa del proyecto utilizando:
+La carpeta **modern-qt-sqlserver** contiene la versión modernizada.
 
-- ⚙️ C++
-- 🖼️ Qt 6 Widgets
-- 🗄️ Microsoft SQL Server
-- 🔌 ODBC Driver 17
-- 🏗️ CMake
-- 📐 Programación Orientada a Objetos
+### Funcionalidades
 
----
-
-# ✨ Funcionalidades de la versión modernizada
-
-- 🌎 Carga dinámica de destinos desde SQL Server
-- 🛫 Gestión de rutas aéreas
-- ✈️ Gestión de aeronaves
-- 🎫 Gestión de vuelos
-- 🔎 Búsqueda inteligente de rutas
-- 🔄 Cálculo automático de escalas
-- 📏 Distancia total del recorrido
-- ⏱️ Duración total del viaje
-- 💵 Precio total del viaje
-- 🛩️ Información del vuelo y aeronave asignada
-- 📋 Ventana **"Acerca de"** con información histórica del proyecto
-- 🏛️ Inclusión del logotipo institucional del ITLA
-- 🎨 Interfaz gráfica moderna desarrollada con Qt
+- 🌎 Carga dinámica de destinos desde SQL Server.
+- 🛫 Gestión de rutas.
+- ✈️ Gestión de aeronaves.
+- 🎫 Gestión de vuelos.
+- 🔎 Búsqueda inteligente de rutas.
+- 🔄 Cálculo automático de escalas.
+- 📏 Distancia total.
+- ⏱️ Duración total.
+- 💵 Precio total del viaje.
+- 🛩️ Información del vuelo y aeronave.
+- 📋 Ventana "Acerca de".
+- 🏛️ Créditos históricos del proyecto.
+- 🎨 Interfaz moderna desarrollada con Qt.
 
 ---
 
 # 🗄️ Base de datos
 
-La base de datos está compuesta por las siguientes tablas principales:
+Tablas principales:
 
-- 🌎 Destinos
-- 🛫 Rutas
-- ✈️ Aeronaves
-- 🎫 Vuelos
+- Destinos
+- Rutas
+- Aeronaves
+- Vuelos
 
-El script SQL se encuentra en:
+Script:
 
 ```text
 modern-qt-sqlserver/Aerolinea.sql
@@ -126,35 +186,123 @@ modern-qt-sqlserver/Aerolinea.sql
 
 ---
 
-# 🎯 Objetivo de la modernización
+# ⚙️ Requisitos
 
-Demostrar la evolución de un proyecto académico desarrollado en **2018-C1**, transformándolo en una aplicación de escritorio moderna mediante la incorporación de tecnologías actuales, manteniendo la lógica original e incorporando:
-
-- 🏗️ Arquitectura orientada a objetos
-- 🖼️ Interfaz gráfica con Qt
-- 🗄️ Persistencia de datos mediante SQL Server
-- 🔍 Consultas dinámicas
-- 📈 Mejor organización y escalabilidad del código
+- Windows 10/11
+- Qt 6.11 o superior
+- CMake
+- SQL Server
+- ODBC Driver 17
 
 ---
 
-# 📌 Estado del proyecto
+# 🚀 Instalación
 
-🟢 **Versión modernizada funcional — v1.0**
+```bash
+git clone https://github.com/Jairo0811/Aerolinea.git
+```
+
+Abrir:
+
+```text
+modern-qt-sqlserver
+```
+
+en Qt Creator.
+
+Restaurar la base de datos ejecutando:
+
+```text
+Aerolinea.sql
+```
+
+Compilar y ejecutar.
+
+---
+
+# 📈 Evolución del proyecto
+
+| Característica | Legacy (2018-C1) | Modern (2026) |
+|:--------------|:----------------:|:-------------:|
+| Consola | ✅ | ❌ |
+| Interfaz Qt | ❌ | ✅ |
+| SQL Server | ❌ | ✅ |
+| Persistencia de datos | ❌ | ✅ |
+| Arquitectura orientada a objetos | ⚠️ Básica | ✅ |
+| Gestión de aeronaves | ❌ | ✅ |
+| Gestión de vuelos | ❌ | ✅ |
+| Precio total del viaje | ❌ | ✅ |
+| Ventana "Acerca de" | ❌ | ✅ |
+
+---
+
+# 🚦 Estado del proyecto
+
+- [x] Restauración del proyecto original.
+- [x] Modernización con Qt 6.
+- [x] Integración con SQL Server.
+- [x] Gestión de rutas.
+- [x] Gestión de aeronaves.
+- [x] Gestión de vuelos.
+- [x] Cálculo de distancia.
+- [x] Cálculo de duración.
+- [x] Cálculo de precio.
+- [x] Documentación.
+- [x] Publicación en GitHub.
 
 ---
 
 # 📅 Línea de tiempo
 
-| Año | Evento |
-|------|--------|
-| 🎓 **2018-C1** | Desarrollo del proyecto original para la asignatura Estructuras de Datos (SOF-012) |
-| 🚀 **Junio 2026** | Modernización completa utilizando Qt 6, SQL Server y Programación Orientada a Objetos |
+| Fecha | Evento |
+|--------|--------|
+| 🎓 **2018-C1** | Desarrollo del proyecto original |
+| 🚀 **Junio 2026** | Restauración y modernización con Qt 6 y SQL Server |
+
+---
+
+# 📸 Capturas de pantalla
+
+*(Pendientes de agregar.)*
+
+```text
+docs/images/
+├── main-window.png
+├── search-route.png
+└── about.png
+```
+
+---
+
+# 🏆 Aprendizajes
+
+Este proyecto permitió aplicar conocimientos de:
+
+- C++
+- Qt Framework
+- SQL Server
+- CMake
+- Programación Orientada a Objetos
+- Arquitectura modular
+- Gestión de recursos Qt
+- Integración con bases de datos
+
+---
+
+# 🤝 Créditos académicos
+
+La idea original corresponde al proyecto final desarrollado para la asignatura **Estructuras de Datos (SOF-012)** del **Instituto Tecnológico de Las Américas (ITLA)** durante el período **2018-C1**.
+
+---
+
+# 👨‍💻 Autor de la modernización
+
+**Francis Jairo Matías Rosario**
+
+Restauración del código legado, modernización tecnológica, integración con SQL Server, rediseño de la interfaz, documentación y preparación del proyecto para portafolio profesional.
 
 ---
 
 <p align="center">
-
-### ✈️ De un proyecto académico desarrollado durante el cuatrimestre 2018-C1 a una aplicación moderna con Qt 6 y SQL Server en 2026.
-
+<b>✈️ De un proyecto académico desarrollado durante el cuatrimestre 2018-C1 a una aplicación moderna con Qt 6 y Microsoft SQL Server en 2026.</b>
 </p>
