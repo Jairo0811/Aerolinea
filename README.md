@@ -100,17 +100,49 @@ Ruta - Vuelo - Destino - Aeronave    SQL Server
 
 ---
 
-# 🛠️ Tecnologías utilizadas
+# 🛠️ Stack tecnológico
 
-| Tecnología | Uso dentro del proyecto |
-|------------|-------------------------|
-| ⚙️ C++ | Lenguaje principal |
-| 🖼️ Qt 6 Widgets | Interfaz gráfica |
-| 🗄️ Microsoft SQL Server | Persistencia de datos |
-| 🔌 ODBC Driver 17 | Conexión con SQL Server |
-| 🏗️ CMake | Sistema de compilación |
-| 📐 Programación Orientada a Objetos | Arquitectura del proyecto |
-| 🧬 Git / GitHub | Control de versiones |
+## 🖥️ Interfaz de escritorio
+
+<p>
+  <img src="https://skillicons.dev/icons?i=qt" alt="Qt" />
+</p>
+
+- **Qt 6 Widgets:** construcción de la interfaz gráfica de la versión modernizada.
+- **Qt Resources:** administración de recursos visuales mediante `resources.qrc`.
+
+## ⚙️ Núcleo y lógica de aplicación
+
+<p>
+  <img src="https://skillicons.dev/icons?i=cpp" alt="C++" />
+</p>
+
+- **C++17:** lenguaje principal del sistema.
+- **Programación orientada a objetos:** organización de entidades, gestores y responsabilidades.
+- **Estructuras de datos:** implementación original basada en listas enlazadas.
+- **Arquitectura modular:** separación entre interfaz, lógica de rutas y acceso a datos.
+
+## 🗄️ Base de datos y persistencia
+
+<p>
+  <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="Microsoft SQL Server" />
+  <img src="https://img.shields.io/badge/ODBC%20Driver-17-0078D4?style=flat-square&logo=windows&logoColor=white" alt="ODBC Driver 17" />
+</p>
+
+- **Microsoft SQL Server:** persistencia de destinos, rutas, aeronaves y vuelos.
+- **ODBC Driver 17:** conexión entre la aplicación Qt y SQL Server.
+- **Script SQL:** creación y preparación de la base de datos mediante `Aerolinea.sql`.
+
+## 🧰 Compilación y herramientas de desarrollo
+
+<p>
+  <img src="https://skillicons.dev/icons?i=cmake,git,github" alt="CMake, Git y GitHub" />
+</p>
+
+- **CMake:** configuración y automatización del proceso de compilación.
+- **Qt Creator:** entorno principal para desarrollar y ejecutar la versión moderna.
+- **Git:** control de versiones.
+- **GitHub:** alojamiento, documentación y evolución del repositorio.
 
 ---
 
