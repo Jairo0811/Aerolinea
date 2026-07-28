@@ -121,7 +121,7 @@ Ruta - Vuelo - Destino - Aeronave    SQL Server
 ### 🗄️ Base de datos y persistencia
 
 <p>
-  <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=flat-square&logo=microsoftsqlserver&logoColor=white" alt="Microsoft SQL Server" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/microsoftsqlserver/microsoftsqlserver-plain.svg" alt="Microsoft SQL Server" width="48" height="48" />
   <img src="https://img.shields.io/badge/ODBC%20Driver-17-0078D4?style=flat-square&logo=windows&logoColor=white" alt="ODBC Driver 17" />
 </p>
 
