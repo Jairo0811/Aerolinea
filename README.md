@@ -22,6 +22,20 @@
 
 ---
 
+## 🧭 Continuidad académica
+
+Estructuras de Datos fue la segunda de tres asignaturas cursadas con el profesor **Raydelto Hernández Perera**, dentro de una evolución progresiva en el desarrollo de software:
+
+| Orden | Asignatura | Proyecto | Período |
+|---:|---|---|---|
+| 1 | Programación II | [Eventix](https://github.com/Jairo0811/Eventix) | 2017-C2 |
+| 2 | Estructuras de Datos | **Aerolinea** | 2018-C1 |
+| 3 | Programación WEB | [ITLA Crush](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 |
+
+Estos proyectos representan una secuencia académica enfocada en programación, estructuras de datos y desarrollo web. Actualmente están siendo preservados y modernizados como parte del portafolio profesional.
+
+---
+
 ## 📌 Descripción
 
 **Aerolinea** es un sistema para la gestión de rutas aéreas desarrollado originalmente como **proyecto final** de la asignatura **Estructuras de Datos (SOF-012)** durante el **cuatrimestre 2018-C1** del **Instituto Tecnológico de Las Américas (ITLA)**.
@@ -267,7 +281,6 @@ config/database.ini
 ```
 
 5. Configurar el servidor SQL Server dentro de `database.ini`.
-
 6. Ejecutar **Run CMake**, compilar y ejecutar la aplicación.
 
 > `config/database.ini` contiene la configuración local y no debe subirse al repositorio.
@@ -342,17 +355,3 @@ Este proyecto permitió aplicar conocimientos de:
 ## 🤝 Créditos académicos
 
 La idea original corresponde al proyecto final desarrollado para la asignatura **Estructuras de Datos (SOF-012)** del **Instituto Tecnológico de Las Américas (ITLA)** durante el período **2018-C1**.
-
----
-
-## 👨‍💻 Autor de la modernización
-
-**Francis Jairo Matías Rosario**
-
-Restauración del código legado, modernización tecnológica, integración con SQL Server, rediseño de la interfaz, identidad visual, documentación y preparación del proyecto para portafolio profesional.
-
----
-
-<p align="center">
-  <b>✈️ De un proyecto académico desarrollado durante el cuatrimestre 2018-C1 a una aplicación moderna con Qt 6 y Microsoft SQL Server en 2026.</b>
-</p>
