@@ -1,4 +1,4 @@
-# ✈️ Aerolinea
+
 
 <p align="center">
   <img src="modern-qt-sqlserver/aerolineacpp_logo.jpeg" width="420" alt="Logo de AerolineaCPP">
