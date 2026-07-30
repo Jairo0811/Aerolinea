@@ -1,5 +1,3 @@
-
-
 <p align="center">
   <img src="modern-qt-sqlserver/aerolineacpp_logo.jpeg" width="420" alt="Logo de AerolineaCPP">
 </p>
@@ -9,7 +7,7 @@
 </p>
 
 <p align="center">
-
+  <img src="https://img.shields.io/badge/Estado-Finalizado-success?style=for-the-badge" alt="Estado finalizado" />
   <img src="https://img.shields.io/badge/Qt-6-41CD52?style=for-the-badge&logo=qt&logoColor=white" />
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
   <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" />
@@ -19,6 +17,8 @@
 <p align="center">
   <strong>C++ · Qt 6 Widgets · SQL Server · CMake · Programación Orientada a Objetos</strong>
 </p>
+
+> Estado actual: **Proyecto finalizado, restaurado, modernizado y documentado para portafolio profesional.**
 
 ---
 
@@ -308,6 +308,8 @@ config/database.ini
 
 ## 🚦 Estado del proyecto
 
+**Estado general: ✅ Finalizado**
+
 - [x] Restauración del proyecto original.
 - [x] Corrección y estabilización de la versión legacy.
 - [x] Modernización con Qt 6.
@@ -332,26 +334,12 @@ config/database.ini
 | 🎓 **2018-C1** | Desarrollo del proyecto original para Estructuras de Datos (SOF-012) |
 | 🔧 **2026** | Restauración y estabilización del código legado |
 | 🚀 **Junio 2026** | Modernización con Qt 6, SQL Server y CMake |
-| 📦 **2026** | Preparación de la versión modernizada v1.0 para portafolio |
+| 📦 **2026** | Finalización y publicación de la versión moderna |
 
 ---
 
-## 🏆 Aprendizajes
+## 👨‍💻 Autor de la modernización
 
-Este proyecto permitió aplicar conocimientos de:
+**Francis Jairo Matías Rosario**
 
-- C++.
-- Qt Framework.
-- SQL Server.
-- CMake.
-- Programación Orientada a Objetos.
-- Arquitectura modular.
-- Gestión de recursos Qt.
-- Integración con bases de datos.
-- Restauración y modernización de software legado.
-
----
-
-## 🤝 Créditos académicos
-
-La idea original corresponde al proyecto final desarrollado para la asignatura **Estructuras de Datos (SOF-012)** del **Instituto Tecnológico de Las Américas (ITLA)** durante el período **2018-C1**.
+Restauración, modernización, integración con SQL Server, documentación y preparación para portafolio profesional.
