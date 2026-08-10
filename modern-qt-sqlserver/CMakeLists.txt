@@ -30,7 +30,15 @@ add_custom_command(TARGET AerolineaCPP POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
             "${CMAKE_CURRENT_SOURCE_DIR}/config"
             "$<TARGET_FILE_DIR:AerolineaCPP>/config"
-    COMMENT "Copiando configuración de base de datos"
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:AerolineaCPP>/branding"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/aerolineacpp_logo.png"
+            "$<TARGET_FILE_DIR:AerolineaCPP>/branding/aerolineacpp_logo.png"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/itla_logo.png"
+            "$<TARGET_FILE_DIR:AerolineaCPP>/branding/itla_logo.png"
+    COMMENT "Copiando configuración y recursos de branding"
 )
 
 target_link_libraries(AerolineaCPP
