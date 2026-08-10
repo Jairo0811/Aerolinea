@@ -5,8 +5,13 @@ on:
     inputs:
       version:
         description: "Version tag to publish"
-        required: true
+        required: false
         default: "v1.0.0"
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/release-windows.yml"
 
 permissions:
   contents: write
@@ -26,6 +31,15 @@ jobs:
           arch: "win64_msvc2022_64"
           cache: true
 
+      - name: Resolve version
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $version = "v1.0.0"
+          }
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+
       - name: Configure
         shell: pwsh
         run: cmake -S modern-qt-sqlserver -B build -A x64
@@ -37,7 +51,7 @@ jobs:
       - name: Prepare portable package
         shell: pwsh
         run: |
-          $version = "${{ inputs.version }}"
+          $version = $env:RELEASE_VERSION
           $packageName = "AerolineaCPP-$version-Windows-x64"
           $packageDir = Join-Path $PWD "dist\$packageName"
 
@@ -61,11 +75,15 @@ jobs:
             Copy-Item "modern-qt-sqlserver\config\database.example.ini" (Join-Path $packageDir "config\database.example.ini")
           }
 
-          Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
+          if (Test-Path "modern-qt-sqlserver\Aerolinea.sql") {
+            Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
+          }
 
           $readmeLines = @(
             "AerolineaCPP $version",
             "=====================",
+            "",
+            "Legacy Restoration Edition",
             "",
             "REQUISITOS",
             "- Windows 10/11 x64",
@@ -95,12 +113,12 @@ jobs:
           name: ${{ env.PACKAGE_NAME }}
           path: ${{ env.PACKAGE_ZIP }}
 
-      - name: Create GitHub Release
+      - name: Publish GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = "${{ inputs.version }}"
+          $version = $env:RELEASE_VERSION
           $notesFile = Join-Path $PWD "release-notes.md"
 
           $notes = @(
@@ -110,14 +128,14 @@ jobs:
             "",
             "### 🚀 Características",
             "",
-            "- Interfaz gráfica con Qt 6 Widgets.",
+            "- Interfaz responsive rediseñada con Qt 6 Widgets.",
+            "- Identidad visual azul oscuro y cyan de AerolineaCPP.",
             "- Persistencia con Microsoft SQL Server.",
             "- Gestión de destinos, rutas, vuelos y aeronaves.",
             "- Búsqueda de rutas con escalas.",
-            "- Cálculo de distancia y duración total.",
-            "- Cálculo del precio total del viaje.",
+            "- Cálculo de distancia, duración y precio total.",
             "- Configuración portable mediante database.ini.",
-            "- Identidad visual propia de AerolineaCPP.",
+            "- Ventana Acerca de con créditos académicos y branding ITLA.",
             "- Preservación de la versión Legacy original.",
             "",
             "### 📦 Instalación",
@@ -134,4 +152,10 @@ jobs:
 
           $notes | Set-Content -Encoding UTF8 $notesFile
 
-          gh release create $version "${{ env.PACKAGE_ZIP }}" --target master --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
+          if (gh release view $version 2>$null) {
+            gh release upload $version "${{ env.PACKAGE_ZIP }}" --clobber
+            gh release edit $version --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
+          }
+          else {
+            gh release create $version "${{ env.PACKAGE_ZIP }}" --target master --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
+          }
