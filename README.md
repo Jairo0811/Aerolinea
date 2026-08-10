@@ -3,49 +3,100 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/ITLA-2018--C1-0057B8?style=for-the-badge" />
-</p>
-
-<p align="center">
+  <img src="https://img.shields.io/badge/ITLA-2018--C1-0057B8?style=for-the-badge" alt="ITLA 2018-C1" />
   <img src="https://img.shields.io/badge/Estado-Finalizado-success?style=for-the-badge" alt="Estado finalizado" />
-  <img src="https://img.shields.io/badge/Qt-6-41CD52?style=for-the-badge&logo=qt&logoColor=white" />
-  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
-  <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" />
-  <img src="https://img.shields.io/badge/CMake-Build-064F8C?style=for-the-badge&logo=cmake&logoColor=white" />
+  <img src="https://img.shields.io/github/v/release/Jairo0811/Aerolinea?style=for-the-badge&label=Release" alt="GitHub Release" />
 </p>
 
 <p align="center">
-  <strong>C++ · Qt 6 Widgets · SQL Server · CMake · Programación Orientada a Objetos</strong>
+  <img src="https://img.shields.io/badge/Qt-6-41CD52?style=for-the-badge&logo=qt&logoColor=white" alt="Qt 6" />
+  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++17" />
+  <img src="https://img.shields.io/badge/SQL%20Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white" alt="SQL Server" />
+  <img src="https://img.shields.io/badge/CMake-Build-064F8C?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake" />
 </p>
 
-> Estado actual: **Proyecto finalizado, restaurado, modernizado y documentado para portafolio profesional.**
+<p align="center">
+  <strong>De un proyecto académico de consola de 2018 a una aplicación de escritorio moderna en 2026.</strong>
+</p>
 
----
+<p align="center">
+  <a href="https://github.com/Jairo0811/Aerolinea/releases/tag/v1.0.0"><strong>📦 Descargar AerolineaCPP v1.0.0</strong></a>
+  ·
+  <a href="https://github.com/Jairo0811/Aerolinea/releases"><strong>🚀 Releases</strong></a>
+</p>
 
-## 🧭 Continuidad académica
-
-Estructuras de Datos fue la segunda de tres asignaturas cursadas con el profesor **Raydelto Hernández Perera**, dentro de una evolución progresiva en el desarrollo de software:
-
-| Orden | Asignatura | Proyecto | Período |
-|---:|---|---|---|
-| 1 | Programación II | [Eventix](https://github.com/Jairo0811/Eventix) | 2017-C2 |
-| 2 | Estructuras de Datos | **Aerolinea** | 2018-C1 |
-| 3 | Programación WEB | [ITLA Crush](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 |
-
-Estos proyectos representan una secuencia académica enfocada en programación, estructuras de datos y desarrollo web. Actualmente están siendo preservados y modernizados como parte del portafolio profesional.
+> **Estado actual:** proyecto finalizado, restaurado, modernizado, distribuible para Windows x64 y documentado para portafolio profesional.
 
 ---
 
 ## 📌 Descripción
 
-**Aerolinea** es un sistema para la gestión de rutas aéreas desarrollado originalmente como **proyecto final** de la asignatura **Estructuras de Datos (SOF-012)** durante el **cuatrimestre 2018-C1** del **Instituto Tecnológico de Las Américas (ITLA)**.
+**Aerolinea** es un sistema para la gestión y búsqueda de rutas aéreas desarrollado originalmente como **proyecto final** de la asignatura **Estructuras de Datos (SOF-012)** durante el **cuatrimestre 2018-C1** del **Instituto Tecnológico de Las Américas (ITLA)**.
 
-Ocho años después, el proyecto fue **restaurado y modernizado** con el propósito de preservar el trabajo académico original y demostrar su evolución mediante tecnologías actuales como **Qt 6**, **Microsoft SQL Server**, **CMake** y una arquitectura orientada a objetos.
+En **2026**, el proyecto fue recuperado con dos objetivos: **preservar su versión académica original** y demostrar su evolución mediante una modernización construida con **C++17, Qt 6 Widgets, Microsoft SQL Server, ODBC y CMake**.
 
-El repositorio conserva ambas versiones:
+El repositorio conserva ambas etapas del proyecto:
 
-- 🕰️ **Legacy (2018-C1)** — aplicación original de consola.
-- 🚀 **Modern Qt + SQL Server (2026)** — aplicación de escritorio moderna.
+- 🕰️ **Legacy (2018-C1):** aplicación original de consola basada en listas enlazadas.
+- 🚀 **AerolineaCPP (2026):** aplicación de escritorio moderna, responsive y respaldada por SQL Server.
+
+La modernización no sustituye el proyecto histórico: ambos conviven en el mismo repositorio para hacer visible el proceso de evolución técnica.
+
+---
+
+## ✨ AerolineaCPP v1.0.0
+
+La versión moderna ofrece una interfaz de escritorio en tema oscuro, identidad visual propia y un flujo centrado en consultar rutas aéreas almacenadas en SQL Server.
+
+### Funcionalidades principales
+
+- 🌎 Carga dinámica de destinos desde SQL Server.
+- 🛫 Gestión y consulta de rutas aéreas.
+- ✈️ Gestión de aeronaves.
+- 🎫 Gestión de vuelos.
+- 🔎 Búsqueda de rutas directas y con escalas.
+- 🔄 Cálculo automático del número de escalas.
+- 📏 Cálculo de distancia total del recorrido.
+- ⏱️ Cálculo de duración total.
+- 💵 Cálculo del precio total del viaje.
+- 🛩️ Información de aerolínea, vuelo y aeronave para cada tramo.
+- 🟢 Estados visuales para búsquedas exitosas, errores y rutas no disponibles.
+- 🧹 Acción para limpiar rápidamente una consulta.
+- 📊 Indicadores de destinos, rutas, aeronaves y vuelos registrados.
+- 📋 Ventana **Acerca de** con la historia y créditos del proyecto original.
+- 🏛️ Identidad académica del ITLA preservada dentro de la aplicación.
+- 🖼️ Recursos visuales embebidos y fallback externo para la distribución portable.
+- ⚙️ Configuración externa de la conexión mediante `database.ini`.
+
+---
+
+## 📦 Release estable para Windows
+
+La versión **v1.0.0** se distribuye como paquete portable para **Windows x64** mediante GitHub Releases.
+
+### Descarga
+
+**[AerolineaCPP v1.0.0 — Windows x64](https://github.com/Jairo0811/Aerolinea/releases/tag/v1.0.0)**
+
+El paquete publicado incluye el ejecutable, dependencias de Qt, plugins requeridos, recursos visuales, script SQL y archivo de configuración de ejemplo.
+
+### Instalación rápida
+
+1. Descargar `AerolineaCPP-v1.0.0-Windows-x64.zip` desde Releases.
+2. Extraer completamente el archivo ZIP.
+3. Ejecutar `Aerolinea.sql` en Microsoft SQL Server.
+4. Copiar `config/database.example.ini` como `config/database.ini`.
+5. Configurar la instancia de SQL Server en `database.ini`.
+6. Ejecutar `AerolineaCPP.exe`.
+
+> No es necesario instalar Qt Creator para ejecutar el paquete publicado. SQL Server y el controlador ODBC correspondiente sí deben estar disponibles para utilizar la persistencia de datos.
+
+### Integridad del paquete v1.0.0
+
+```text
+SHA-256
+541317665042110010749f27175bfd1eb7a9622278c8cc411ecf66176099c963
+```
 
 ---
 
@@ -70,26 +121,54 @@ El repositorio conserva ambas versiones:
 
 ---
 
-## 📖 Historia del proyecto
+## 🧭 Continuidad académica
 
-El proyecto nació como una aplicación desarrollada completamente en **C++ para consola**, implementando estructuras de datos mediante listas enlazadas.
+Estructuras de Datos fue la segunda de tres asignaturas cursadas con el profesor **Raydelto Hernández Perera**, dentro de una evolución progresiva en el desarrollo de software:
 
-En **2026** fue restaurado y modernizado manteniendo la lógica principal, pero incorporando tecnologías actuales para convertirlo en una aplicación de escritorio con persistencia de datos y una arquitectura más mantenible.
+| Orden | Asignatura | Proyecto | Período |
+|---:|---|---|---|
+| 1 | Programación II | [Eventix](https://github.com/Jairo0811/Eventix) | 2017-C2 |
+| 2 | Estructuras de Datos | **Aerolinea** | 2018-C1 |
+| 3 | Programación WEB | [ITLA Crush](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 |
 
-La versión moderna incluye funcionalidades que no existían en el proyecto original, sin perder la esencia del desarrollo académico realizado durante el período **2018-C1**.
+Estos proyectos representan una secuencia académica enfocada en programación, estructuras de datos y desarrollo web y forman parte del proceso de preservación y modernización de proyectos académicos del portafolio.
 
 ---
 
-## 🎯 Objetivo
+## 📖 Historia del proyecto
 
-Demostrar la evolución de un proyecto académico hacia una solución moderna mediante la incorporación de:
+El proyecto nació en **2018-C1** como una aplicación desarrollada en **C++ para consola**, cuyo núcleo académico estaba orientado al uso de estructuras de datos mediante listas enlazadas.
 
-- 🖼️ Interfaz gráfica con Qt 6.
-- 🗄️ Persistencia de datos con SQL Server.
-- 📐 Arquitectura orientada a objetos.
-- 🏗️ Organización modular del código.
-- 🔍 Consultas dinámicas.
-- 📈 Mayor escalabilidad y mantenibilidad.
+La restauración conserva esa versión dentro de `legacy/`, corrigiendo desperfectos que impedían utilizarla con comodidad en entornos actuales sin convertirla artificialmente en la aplicación moderna.
+
+La versión de 2026 fue construida separadamente en `modern-qt-sqlserver/`. Sobre la idea original incorpora interfaz gráfica, persistencia relacional, separación de responsabilidades, configuración externa y un modelo de distribución reproducible.
+
+El resultado permite comparar directamente dos etapas de aprendizaje y desarrollo separadas por ocho años.
+
+---
+
+## 📈 Evolución: 2018 → 2026
+
+| Característica | Legacy (2018-C1) | AerolineaCPP (2026) |
+|:--------------|:----------------:|:-------------------:|
+| Aplicación de consola | ✅ | ❌ |
+| Interfaz gráfica responsive | ❌ | ✅ Qt 6 Widgets |
+| Listas enlazadas | ✅ | Preservadas en Legacy |
+| SQL Server | ❌ | ✅ |
+| Persistencia de datos | ❌ | ✅ |
+| Arquitectura orientada a objetos | ⚠️ Básica | ✅ |
+| Separación de responsabilidades | ❌ | ✅ |
+| Gestión de aeronaves | ❌ | ✅ |
+| Gestión de vuelos | ❌ | ✅ |
+| Rutas con escalas | ⚠️ Lógica académica | ✅ |
+| Distancia y duración total | ❌ | ✅ |
+| Precio total | ❌ | ✅ |
+| Configuración externa | ❌ | ✅ |
+| Estados visuales de búsqueda | ❌ | ✅ |
+| Ventana Acerca de | ❌ | ✅ |
+| Identidad visual propia | ❌ | ✅ |
+| Build automatizado | ❌ | ✅ GitHub Actions |
+| Release portable Windows x64 | ❌ | ✅ |
 
 ---
 
@@ -112,51 +191,36 @@ Demostrar la evolución de un proyecto académico hacia una solución moderna me
 Ruta - Vuelo - Destino - Aeronave    SQL Server
 ```
 
+La interfaz se encarga de interacción y presentación; `RutaManager` concentra la lógica relacionada con la búsqueda de rutas y `DatabaseManager` encapsula el acceso a SQL Server.
+
 ---
 
 ## 🛠️ Stack tecnológico
 
-### 🖥️ Interfaz de escritorio
-
-<p>
-  <img src="https://skillicons.dev/icons?i=qt" alt="Qt" />
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=cpp,qt,cmake,git,github" alt="C++, Qt, CMake, Git y GitHub" />
 </p>
 
-- **Qt 6 Widgets:** construcción de la interfaz gráfica de la versión modernizada.
-- **Qt Resources:** administración de recursos visuales mediante `resources.qrc`.
+### Aplicación
 
-### ⚙️ Núcleo y lógica de aplicación
+- **C++17** — lenguaje principal.
+- **Qt 6 Widgets** — interfaz gráfica de escritorio.
+- **Qt SQL** — integración de acceso a datos.
+- **Qt Resources** — recursos visuales embebidos.
+- **Programación Orientada a Objetos** — organización de entidades y responsabilidades.
 
-<p>
-  <img src="https://skillicons.dev/icons?i=cpp" alt="C++" />
-</p>
+### Datos
 
-- **C++17:** lenguaje principal del sistema.
-- **Programación orientada a objetos:** organización de entidades, gestores y responsabilidades.
-- **Estructuras de datos:** implementación original basada en listas enlazadas.
-- **Arquitectura modular:** separación entre interfaz, lógica de rutas y acceso a datos.
+- **Microsoft SQL Server** — persistencia de destinos, rutas, aeronaves y vuelos.
+- **ODBC** — conectividad entre Qt y SQL Server.
+- **Aerolinea.sql** — creación y carga inicial de la base de datos.
 
-### 🗄️ Base de datos y persistencia
+### Ingeniería y distribución
 
-<p>
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/microsoftsqlserver/microsoftsqlserver-plain.svg" alt="Microsoft SQL Server" width="48" height="48" />
-  <img src="https://img.shields.io/badge/ODBC%20Driver-17-0078D4?style=flat-square&logo=windows&logoColor=white" alt="ODBC Driver 17" />
-</p>
-
-- **Microsoft SQL Server:** persistencia de destinos, rutas, aeronaves y vuelos.
-- **ODBC Driver 17:** conexión entre la aplicación Qt y SQL Server.
-- **Script SQL:** creación y preparación de la base de datos mediante `Aerolinea.sql`.
-
-### 🧰 Compilación y herramientas de desarrollo
-
-<p>
-  <img src="https://skillicons.dev/icons?i=cmake,git,github" alt="CMake, Git y GitHub" />
-</p>
-
-- **CMake:** configuración y automatización del proceso de compilación.
-- **Qt Creator:** entorno principal para desarrollar y ejecutar la versión moderna.
-- **Git:** control de versiones.
-- **GitHub:** alojamiento, documentación y evolución del repositorio.
+- **CMake** — configuración de compilación.
+- **Git / GitHub** — control de versiones y repositorio.
+- **GitHub Actions** — build y empaquetado automatizado para Windows.
+- **GitHub Releases** — distribución de la versión estable.
 
 ---
 
@@ -166,15 +230,19 @@ Ruta - Vuelo - Destino - Aeronave    SQL Server
 Aerolinea/
 │
 ├── legacy/
-│   └── Proyecto original desarrollado en C++ para consola (2018-C1)
+│   └── Proyecto original en C++ para consola (2018-C1)
 │
 ├── modern-qt-sqlserver/
-│   ├── Código fuente Qt
+│   ├── Código fuente Qt/C++
 │   ├── Aerolinea.sql
 │   ├── resources.qrc
 │   ├── CMakeLists.txt
 │   └── config/
 │       └── database.example.ini
+│
+├── .github/
+│   └── workflows/
+│       └── release-windows.yml
 │
 ├── README.md
 └── .gitignore
@@ -184,146 +252,75 @@ Aerolinea/
 
 ## 🕰️ Legacy
 
-La carpeta **legacy** conserva la versión original del proyecto académico.
+La carpeta `legacy/` conserva el proyecto académico original.
 
-### Características
+### Características preservadas y restauradas
 
 - 📋 Gestión básica de destinos.
 - 🔗 Implementación mediante listas enlazadas.
-- 🖥️ Aplicación de consola.
-- 📚 Proyecto original del ITLA.
-- 🔧 Código restaurado para mejorar estabilidad y compatibilidad con compiladores actuales.
+- 🖥️ Interfaz por consola.
+- 📚 Enfoque académico original de Estructuras de Datos.
+- 🔧 Correcciones de estabilidad y compatibilidad con compiladores actuales.
 - 🚫 Prevención de destinos duplicados.
 - 🔤 Búsquedas sin distinción entre mayúsculas y minúsculas.
 
----
-
-## ⚡ Modern Qt + SQL Server
-
-La carpeta **modern-qt-sqlserver** contiene la versión modernizada.
-
-### Funcionalidades
-
-- 🌎 Carga dinámica de destinos desde SQL Server.
-- 🛫 Gestión de rutas.
-- ✈️ Gestión de aeronaves.
-- 🎫 Gestión de vuelos.
-- 🔎 Búsqueda inteligente de rutas.
-- 🔄 Cálculo automático de escalas.
-- 📏 Distancia total.
-- ⏱️ Duración total.
-- 💵 Precio total del viaje.
-- 🛩️ Información del vuelo y aeronave.
-- 📋 Ventana "Acerca de".
-- 🏛️ Créditos históricos del proyecto.
-- 🎨 Interfaz moderna desarrollada con Qt.
-- 🖼️ Identidad visual propia de AerolineaCPP.
+Esta versión se mantiene deliberadamente separada de AerolineaCPP para conservar el valor histórico del código de 2018.
 
 ---
 
 ## 🗄️ Base de datos
 
-Tablas principales:
+Las tablas principales son:
 
 - `Destinos`
 - `Rutas`
 - `Aeronaves`
 - `Vuelos`
 
-Script:
+Script de inicialización:
 
 ```text
 modern-qt-sqlserver/Aerolinea.sql
 ```
 
----
-
-## ⚙️ Requisitos
-
-- Windows 10/11.
-- Qt 6.11 o superior.
-- CMake 3.19 o superior.
-- Microsoft SQL Server.
-- ODBC Driver 17 for SQL Server.
-
----
-
-## 🚀 Instalación y configuración
-
-1. Clonar el repositorio:
-
-```bash
-git clone https://github.com/Jairo0811/Aerolinea.git
-```
-
-2. Abrir en Qt Creator:
+La configuración local se realiza mediante:
 
 ```text
-modern-qt-sqlserver/
+modern-qt-sqlserver/config/database.ini
 ```
 
-3. Ejecutar el script de base de datos:
-
-```text
-modern-qt-sqlserver/Aerolinea.sql
-```
-
-4. Copiar el archivo de ejemplo:
-
-```text
-config/database.example.ini
-```
-
-como:
-
-```text
-config/database.ini
-```
-
-5. Configurar el servidor SQL Server dentro de `database.ini`.
-6. Ejecutar **Run CMake**, compilar y ejecutar la aplicación.
-
-> `config/database.ini` contiene la configuración local y no debe subirse al repositorio.
+El repositorio incluye únicamente `database.example.ini`; las credenciales locales no deben versionarse.
 
 ---
 
-## 📈 Evolución del proyecto
+## 🧪 Build y distribución
 
-| Característica | Legacy (2018-C1) | Modern (2026) |
-|:--------------|:----------------:|:-------------:|
-| Aplicación de consola | ✅ | ❌ |
-| Interfaz gráfica Qt | ❌ | ✅ |
-| SQL Server | ❌ | ✅ |
-| Persistencia de datos | ❌ | ✅ |
-| Arquitectura orientada a objetos | ⚠️ Básica | ✅ |
-| Arquitectura modular | ❌ | ✅ |
-| Gestión de aeronaves | ❌ | ✅ |
-| Gestión de vuelos | ❌ | ✅ |
-| Precio total del viaje | ❌ | ✅ |
-| Configuración externa de conexión | ❌ | ✅ |
-| Ventana "Acerca de" | ❌ | ✅ |
-| Identidad visual propia | ❌ | ✅ |
+El proyecto utiliza **CMake** y dispone de automatización en **GitHub Actions** para construir la versión Windows y preparar el paquete portable.
+
+Esto permite generar una distribución reproducible sin depender de que el desarrollador tenga Qt instalado en la máquina desde la que se publica el Release.
 
 ---
 
 ## 🚦 Estado del proyecto
 
-**Estado general: ✅ Finalizado**
+### ✅ AerolineaCPP v1.0.0 — Finalizado
 
-- [x] Restauración del proyecto original.
-- [x] Corrección y estabilización de la versión legacy.
-- [x] Modernización con Qt 6.
+- [x] Preservación del proyecto original.
+- [x] Restauración y estabilización de Legacy.
+- [x] Modernización con C++17 y Qt 6.
 - [x] Integración con SQL Server.
-- [x] Gestión de rutas.
-- [x] Gestión de aeronaves.
-- [x] Gestión de vuelos.
-- [x] Cálculo de distancia.
-- [x] Cálculo de duración.
-- [x] Cálculo de precio.
-- [x] Configuración portable de la conexión.
-- [x] Identidad visual propia.
-- [x] Documentación.
-- [x] Publicación en GitHub.
+- [x] Gestión de destinos, rutas, aeronaves y vuelos.
+- [x] Búsqueda de rutas directas y con escalas.
+- [x] Cálculo de distancia, duración y precio.
+- [x] Interfaz responsive en tema oscuro.
+- [x] Estados visuales y acción Limpiar.
+- [x] Identidad visual de AerolineaCPP.
+- [x] Créditos académicos e identidad institucional.
+- [x] Configuración portable de base de datos.
+- [x] Build automatizado para Windows.
+- [x] Release v1.0.0 publicado.
+- [x] SHA-256 del paquete publicado.
+- [x] Documentación para portafolio.
 
 ---
 
@@ -332,9 +329,11 @@ config/database.ini
 | Fecha | Evento |
 |--------|--------|
 | 🎓 **2018-C1** | Desarrollo del proyecto original para Estructuras de Datos (SOF-012) |
-| 🔧 **2026** | Restauración y estabilización del código legado |
-| 🚀 **Junio 2026** | Modernización con Qt 6, SQL Server y CMake |
-| 📦 **2026** | Finalización y publicación de la versión moderna |
+| 🔧 **2026** | Restauración y estabilización del código Legacy |
+| 🚀 **Junio 2026** | Modernización con C++17, Qt 6, SQL Server y CMake |
+| 🎨 **2026** | Rediseño responsive, identidad visual y mejoras de UX |
+| ⚙️ **2026** | Automatización de build y distribución con GitHub Actions |
+| 📦 **2026** | Publicación de AerolineaCPP v1.0.0 para Windows x64 |
 
 ---
 
@@ -342,4 +341,11 @@ config/database.ini
 
 **Francis Jairo Matías Rosario**
 
-Restauración, modernización, integración con SQL Server, documentación y preparación para portafolio profesional.
+Restauración, modernización, integración con SQL Server, diseño de interfaz, automatización de build, documentación y preparación para portafolio profesional.
+
+---
+
+<p align="center">
+  <strong>✈️ AerolineaCPP — Legacy Restoration Edition</strong><br>
+  Proyecto académico ITLA 2018-C1 · Restauración y modernización 2026
+</p>
