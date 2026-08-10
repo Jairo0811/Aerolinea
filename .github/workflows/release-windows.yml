@@ -22,27 +22,26 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.8.3'
-          arch: 'win64_msvc2022_64'
-          modules: 'qttools'
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          modules: "qttools"
           cache: true
 
       - name: Configure
         shell: pwsh
-        run: |
-          cmake -S modern-qt-sqlserver -B build -A x64
+        run: cmake -S modern-qt-sqlserver -B build -A x64
 
       - name: Build Release
         shell: pwsh
-        run: |
-          cmake --build build --config Release --parallel
+        run: cmake --build build --config Release --parallel
 
       - name: Prepare portable package
         shell: pwsh
         run: |
-          $version = "${{ github.event.inputs.version }}"
+          $version = "${{ inputs.version }}"
           $packageName = "AerolineaCPP-$version-Windows-x64"
           $packageDir = Join-Path $PWD "dist\$packageName"
+
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
           $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
@@ -55,47 +54,38 @@ jobs:
 
           Copy-Item $exe.FullName (Join-Path $packageDir "AerolineaCPP.exe")
 
-          windeployqt `
-            --release `
-            --compiler-runtime `
-            --no-translations `
-            (Join-Path $packageDir "AerolineaCPP.exe")
+          windeployqt --release --compiler-runtime --no-translations (Join-Path $packageDir "AerolineaCPP.exe")
 
           New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "config") | Out-Null
 
           if (Test-Path "modern-qt-sqlserver\config\database.example.ini") {
-            Copy-Item `
-              "modern-qt-sqlserver\config\database.example.ini" `
-              (Join-Path $packageDir "config\database.example.ini")
+            Copy-Item "modern-qt-sqlserver\config\database.example.ini" (Join-Path $packageDir "config\database.example.ini")
           }
 
-          Copy-Item `
-            "modern-qt-sqlserver\Aerolinea.sql" `
-            (Join-Path $packageDir "Aerolinea.sql")
+          Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
 
-          @"
-AerolineaCPP $version
-=====================
+          $readmeLines = @(
+            "AerolineaCPP $version",
+            "=====================",
+            "",
+            "REQUISITOS",
+            "- Windows 10/11 x64",
+            "- Microsoft ODBC Driver 17 for SQL Server",
+            "- Microsoft SQL Server",
+            "",
+            "INSTALACIÓN",
+            "1. Ejecuta Aerolinea.sql en SQL Server.",
+            "2. Copia config\database.example.ini como config\database.ini.",
+            "3. Configura la instancia de SQL Server en database.ini.",
+            "4. Ejecuta AerolineaCPP.exe.",
+            "",
+            "Repositorio:",
+            "https://github.com/Jairo0811/Aerolinea"
+          )
 
-REQUISITOS
-- Windows 10/11 x64
-- Microsoft ODBC Driver 17 for SQL Server
-- Microsoft SQL Server
+          $readmeLines | Set-Content -Encoding UTF8 (Join-Path $packageDir "LEEME.txt")
 
-INSTALACIÓN
-1. Ejecuta Aerolinea.sql en SQL Server.
-2. Copia config\database.example.ini como config\database.ini.
-3. Configura la instancia de SQL Server en database.ini.
-4. Ejecuta AerolineaCPP.exe.
-
-Repositorio:
-https://github.com/Jairo0811/Aerolinea
-"@ | Set-Content -Encoding UTF8 (Join-Path $packageDir "LEEME.txt")
-
-          Compress-Archive `
-            -Path "$packageDir\*" `
-            -DestinationPath "dist\$packageName.zip" `
-            -Force
+          Compress-Archive -Path "$packageDir\*" -DestinationPath "dist\$packageName.zip" -Force
 
           "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
           "PACKAGE_ZIP=dist\$packageName.zip" >> $env:GITHUB_ENV
@@ -111,37 +101,38 @@ https://github.com/Jairo0811/Aerolinea
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $version = "${{ github.event.inputs.version }}"
+          $version = "${{ inputs.version }}"
+          $notesFile = Join-Path $PWD "release-notes.md"
 
-          gh release create $version `
-            "${{ env.PACKAGE_ZIP }}" `
-            --target master `
-            --title "AerolineaCPP $version — Legacy Restoration Edition" `
-            --notes @"
-## ✈️ AerolineaCPP $version
+          $notes = @(
+            "## ✈️ AerolineaCPP $version",
+            "",
+            "Primera versión estable de la modernización de **Aerolinea**, proyecto final desarrollado originalmente para **Estructuras de Datos (SOF-012)** en el ITLA durante el período **2018-C1**.",
+            "",
+            "### 🚀 Características",
+            "",
+            "- Interfaz gráfica con Qt 6 Widgets.",
+            "- Persistencia con Microsoft SQL Server.",
+            "- Gestión de destinos, rutas, vuelos y aeronaves.",
+            "- Búsqueda de rutas con escalas.",
+            "- Cálculo de distancia y duración total.",
+            "- Cálculo del precio total del viaje.",
+            "- Configuración portable mediante database.ini.",
+            "- Identidad visual propia de AerolineaCPP.",
+            "- Preservación de la versión Legacy original.",
+            "",
+            "### 📦 Instalación",
+            "",
+            "1. Descarga AerolineaCPP-$version-Windows-x64.zip.",
+            "2. Extrae su contenido.",
+            "3. Ejecuta Aerolinea.sql.",
+            "4. Copia config/database.example.ini como config/database.ini.",
+            "5. Configura tu instancia de SQL Server.",
+            "6. Ejecuta AerolineaCPP.exe.",
+            "",
+            "**Estado:** versión estable para portafolio y demostración."
+          )
 
-Primera versión estable de la modernización de **Aerolinea**, proyecto final desarrollado originalmente para **Estructuras de Datos (SOF-012)** en el ITLA durante el período **2018-C1**.
+          $notes | Set-Content -Encoding UTF8 $notesFile
 
-### 🚀 Características
-
-- Interfaz gráfica con Qt 6 Widgets.
-- Persistencia con Microsoft SQL Server.
-- Gestión de destinos, rutas, vuelos y aeronaves.
-- Búsqueda de rutas con escalas.
-- Cálculo de distancia y duración total.
-- Cálculo del precio total del viaje.
-- Configuración portable mediante `database.ini`.
-- Identidad visual propia de AerolineaCPP.
-- Preservación de la versión Legacy original.
-
-### 📦 Instalación
-
-1. Descarga el archivo `AerolineaCPP-$version-Windows-x64.zip`.
-2. Extrae su contenido.
-3. Ejecuta `Aerolinea.sql`.
-4. Copia `config/database.example.ini` como `config/database.ini`.
-5. Configura tu instancia de SQL Server.
-6. Ejecuta `AerolineaCPP.exe`.
-
-**Estado:** versión estable para portafolio y demostración.
-"@
+          gh release create $version "${{ env.PACKAGE_ZIP }}" --target master --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
