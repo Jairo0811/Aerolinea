@@ -17,7 +17,16 @@ qt_add_executable(AerolineaCPP
     databasemanager.h databasemanager.cpp
     vuelo.h vuelo.cpp
     aeronave.h aeronave.cpp
-    resources.qrc
+)
+
+# Branding embebido directamente en el ejecutable.
+# qt_add_resources evita depender del procesamiento implícito de resources.qrc
+# y garantiza que los logos estén disponibles en builds locales y de CI.
+qt_add_resources(AerolineaCPP "branding_resources"
+    PREFIX "/branding"
+    FILES
+        aerolineacpp_logo.png
+        itla_logo.png
 )
 
 if(WIN32)
