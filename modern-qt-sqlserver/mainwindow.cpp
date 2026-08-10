@@ -4,6 +4,7 @@
 #include "databasemanager.h"
 
 #include <QAction>
+#include <QCoreApplication>
 #include <QDialog>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -15,8 +16,26 @@
 
 namespace
 {
-constexpr auto APP_LOGO = ":/branding/aerolineacpp.png";
-constexpr auto ITLA_LOGO = ":/branding/itla.png";
+constexpr auto APP_LOGO_RESOURCE = ":/branding/aerolineacpp.png";
+constexpr auto ITLA_LOGO_RESOURCE = ":/branding/itla.png";
+constexpr auto APP_LOGO_FILE = "branding/aerolineacpp_logo.png";
+constexpr auto ITLA_LOGO_FILE = "branding/itla_logo.png";
+
+QPixmap loadBrandPixmap(const QString& resourcePath, const QString& relativeFilePath)
+{
+    QPixmap pixmap(resourcePath);
+
+    if (!pixmap.isNull())
+    {
+        return pixmap;
+    }
+
+    const QString externalPath =
+        QCoreApplication::applicationDirPath() + "/" + relativeFilePath;
+
+    pixmap.load(externalPath);
+    return pixmap;
+}
 
 QString appStyleSheet()
 {
@@ -192,12 +211,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowIcon(QIcon(APP_LOGO));
-    setStyleSheet(appStyleSheet());
+    const QPixmap appLogo = loadBrandPixmap(APP_LOGO_RESOURCE, APP_LOGO_FILE);
 
-    const QPixmap appLogo(APP_LOGO);
     if (!appLogo.isNull())
     {
+        setWindowIcon(QIcon(appLogo));
         ui->lblBrandLogo->setPixmap(
             appLogo.scaled(
                 145,
@@ -208,6 +226,7 @@ MainWindow::MainWindow(QWidget *parent)
         );
     }
 
+    setStyleSheet(appStyleSheet());
     statusBar()->showMessage("Sistema listo");
 
     QAction *accionAcercaDe = new QAction("Acerca de", this);
@@ -221,7 +240,15 @@ MainWindow::MainWindow(QWidget *parent)
         {
             QDialog dialog(this);
             dialog.setWindowTitle("Acerca de AerolineaCPP");
-            dialog.setWindowIcon(QIcon(APP_LOGO));
+
+            const QPixmap appLogoPixmap =
+                loadBrandPixmap(APP_LOGO_RESOURCE, APP_LOGO_FILE);
+
+            if (!appLogoPixmap.isNull())
+            {
+                dialog.setWindowIcon(QIcon(appLogoPixmap));
+            }
+
             dialog.setMinimumSize(620, 640);
             dialog.resize(660, 680);
 
@@ -265,7 +292,7 @@ MainWindow::MainWindow(QWidget *parent)
             brandingLayout->setSpacing(18);
 
             QLabel *appLogoLabel = new QLabel(brandingFrame);
-            const QPixmap appLogoPixmap(APP_LOGO);
+
             if (!appLogoPixmap.isNull())
             {
                 appLogoLabel->setPixmap(
@@ -277,6 +304,7 @@ MainWindow::MainWindow(QWidget *parent)
                     )
                 );
             }
+
             appLogoLabel->setAlignment(Qt::AlignCenter);
 
             QLabel *brandingText = new QLabel(brandingFrame);
@@ -296,7 +324,8 @@ MainWindow::MainWindow(QWidget *parent)
             academicLayout->setSpacing(20);
 
             QLabel *itlaLogoLabel = new QLabel(academicFrame);
-            const QPixmap itlaPixmap(ITLA_LOGO);
+            const QPixmap itlaPixmap =
+                loadBrandPixmap(ITLA_LOGO_RESOURCE, ITLA_LOGO_FILE);
 
             if (!itlaPixmap.isNull())
             {
@@ -308,6 +337,7 @@ MainWindow::MainWindow(QWidget *parent)
                         Qt::SmoothTransformation
                     )
                 );
+                itlaLogoLabel->setMinimumSize(160, 100);
             }
             else
             {
