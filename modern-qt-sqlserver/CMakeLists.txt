@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(AerolineaCPP LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql LinguistTools)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql)
 
 qt_standard_project_setup()
 
@@ -31,11 +31,6 @@ add_custom_command(TARGET AerolineaCPP POST_BUILD
             "${CMAKE_CURRENT_SOURCE_DIR}/config"
             "$<TARGET_FILE_DIR:AerolineaCPP>/config"
     COMMENT "Copiando configuración de base de datos"
-)
-
-qt_add_translations(
-    TARGETS AerolineaCPP
-    TS_FILES AerolineaCPP_es_DO.ts
 )
 
 target_link_libraries(AerolineaCPP
