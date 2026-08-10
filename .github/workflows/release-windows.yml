@@ -12,6 +12,7 @@ on:
       - master
     paths:
       - ".github/workflows/release-windows.yml"
+      - "modern-qt-sqlserver/**"
 
 permissions:
   contents: write
@@ -70,6 +71,7 @@ jobs:
           windeployqt --release --compiler-runtime --no-translations (Join-Path $packageDir "AerolineaCPP.exe")
 
           New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "config") | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "branding") | Out-Null
 
           if (Test-Path "modern-qt-sqlserver\config\database.example.ini") {
             Copy-Item "modern-qt-sqlserver\config\database.example.ini" (Join-Path $packageDir "config\database.example.ini")
@@ -78,6 +80,9 @@ jobs:
           if (Test-Path "modern-qt-sqlserver\Aerolinea.sql") {
             Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
           }
+
+          Copy-Item "modern-qt-sqlserver\aerolineacpp_logo.png" (Join-Path $packageDir "branding\aerolineacpp_logo.png")
+          Copy-Item "modern-qt-sqlserver\itla_logo.png" (Join-Path $packageDir "branding\itla_logo.png")
 
           $readmeLines = @(
             "AerolineaCPP $version",
@@ -135,13 +140,14 @@ jobs:
             "- Búsqueda de rutas con escalas.",
             "- Cálculo de distancia, duración y precio total.",
             "- Configuración portable mediante database.ini.",
-            "- Ventana Acerca de con créditos académicos y branding ITLA.",
+            "- Ventana Acerca de con créditos académicos y logo institucional del ITLA.",
+            "- Carga de logos con fallback externo para garantizar compatibilidad en la versión portable.",
             "- Preservación de la versión Legacy original.",
             "",
             "### 📦 Instalación",
             "",
             "1. Descarga AerolineaCPP-$version-Windows-x64.zip.",
-            "2. Extrae su contenido.",
+            "2. Extrae su contenido completo.",
             "3. Ejecuta Aerolinea.sql.",
             "4. Copia config/database.example.ini como config/database.ini.",
             "5. Configura tu instancia de SQL Server.",
