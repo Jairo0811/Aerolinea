@@ -1,7 +1,7 @@
 <RCC>
-    <qresource prefix="/">
-        <file>itla_logo.png</file>
-        <file>aerolineacpp_logo.png</file>
-        <file>aerolineacpp.ico</file>
+    <qresource prefix="/branding">
+        <file alias="itla.png">itla_logo.png</file>
+        <file alias="aerolineacpp.png">aerolineacpp_logo.png</file>
+        <file alias="aerolineacpp.ico">aerolineacpp.ico</file>
     </qresource>
 </RCC>
