@@ -1,12 +1,15 @@
 cmake_minimum_required(VERSION 3.19)
-project(AerolineaCPP LANGUAGES CXX)
+project(AerolineaCPP VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql)
 
 qt_standard_project_setup()
 
 qt_add_executable(AerolineaCPP
-    WIN32 MACOSX_BUNDLE
+  WIN32 MACOSX_BUNDLE
+  config.hpp.in
     main.cpp
     mainwindow.cpp
     mainwindow.h
@@ -18,6 +21,8 @@ qt_add_executable(AerolineaCPP
     vuelo.h vuelo.cpp
     aeronave.h aeronave.cpp
 )
+
+configure_file(config.hpp.in config.hpp)
 
 # Mantener rutas estables dentro del ejecutable:
 # :/branding/aerolineacpp.png

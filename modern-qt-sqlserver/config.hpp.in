@@ -1,0 +1,5 @@
+#define PROJECT_NAME "${PROJECT_NAME}"
+#define PROJECT_VERSION "${PROJECT_VERSION}"
+#define ORG_NAME "JM Software Solutions"
+#define ORG_DOMAIN "github.com/Jairo0811"
+#define DISPLAY_NAME "AerolineaCPP - Sistema de Rutas"

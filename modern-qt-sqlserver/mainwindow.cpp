@@ -1,7 +1,8 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "rutamanager.h"
+#include "config.hpp"
 #include "databasemanager.h"
+#include "rutamanager.h"
+#include "ui_mainwindow.h"
 
 #include <QAction>
 #include <QCoreApplication>
@@ -21,11 +22,14 @@ constexpr auto ITLA_LOGO_RESOURCE = ":/branding/itla.png";
 constexpr auto APP_LOGO_FILE = "branding/aerolineacpp_logo.png";
 constexpr auto ITLA_LOGO_FILE = "branding/itla_logo.png";
 
-QPixmap loadBrandPixmap(const QString& resourcePath, const QString& relativeFilePath)
+QPixmap loadBrandPixmap(const QString &resourcePath,
+                        const QString &relativeFilePath)
 {
     QPixmap pixmap(resourcePath);
-    if (!pixmap.isNull()) return pixmap;
-    pixmap.load(QCoreApplication::applicationDirPath() + "/" + relativeFilePath);
+    if (!pixmap.isNull())
+        return pixmap;
+    pixmap.load(QCoreApplication::applicationDirPath() + "/" +
+                relativeFilePath);
     return pixmap;
 }
 
@@ -62,22 +66,28 @@ QString appStyleSheet()
     )";
 }
 
-void setRouteState(QLabel *label, const QString& text, const QString& color, const QString& background, const QString& border)
+void setRouteState(QLabel *label, const QString &text, const QString &color,
+                   const QString &background, const QString &border)
 {
     label->setText(text);
-    label->setStyleSheet(QString("color:%1;background:%2;border:1px solid %3;border-radius:10px;padding:6px 12px;font-size:11px;font-weight:700;").arg(color, background, border));
+    label->setStyleSheet(QString("color:%1;background:%2;border:1px solid "
+                                 "%3;border-radius:10px;padding:6px "
+                                 "12px;font-size:11px;font-weight:700;")
+                             .arg(color, background, border));
 }
-}
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow)
+    : QMainWindow(parent)
+    , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
     const QPixmap appLogo = loadBrandPixmap(APP_LOGO_RESOURCE, APP_LOGO_FILE);
     if (!appLogo.isNull()) {
         setWindowIcon(QIcon(appLogo));
-        ui->lblBrandLogo->setPixmap(appLogo.scaled(170, 96, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        ui->lblBrandLogo->setPixmap(appLogo.scaled(170, 96, Qt::KeepAspectRatio,
+                                                   Qt::SmoothTransformation));
     }
 
     setStyleSheet(appStyleSheet());
@@ -90,8 +100,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(accionAcercaDe, &QAction::triggered, this, [this]() {
         QDialog dialog(this);
         dialog.setWindowTitle("Acerca de AerolineaCPP");
-        const QPixmap appLogoPixmap = loadBrandPixmap(APP_LOGO_RESOURCE, APP_LOGO_FILE);
-        if (!appLogoPixmap.isNull()) dialog.setWindowIcon(QIcon(appLogoPixmap));
+        const QPixmap appLogoPixmap =
+            loadBrandPixmap(APP_LOGO_RESOURCE, APP_LOGO_FILE);
+        if (!appLogoPixmap.isNull())
+            dialog.setWindowIcon(QIcon(appLogoPixmap));
         dialog.setMinimumSize(620, 640);
         dialog.resize(660, 680);
         dialog.setStyleSheet(R"(
@@ -103,72 +115,127 @@ MainWindow::MainWindow(QWidget *parent)
         )");
 
         QVBoxLayout *layout = new QVBoxLayout(&dialog);
-        layout->setContentsMargins(26,24,26,24); layout->setSpacing(16);
+        layout->setContentsMargins(26, 24, 26, 24);
+        layout->setSpacing(16);
 
         QFrame *brandingFrame = new QFrame(&dialog);
         QHBoxLayout *brandingLayout = new QHBoxLayout(brandingFrame);
-        brandingLayout->setContentsMargins(18,14,18,14); brandingLayout->setSpacing(18);
+        brandingLayout->setContentsMargins(18, 14, 18, 14);
+        brandingLayout->setSpacing(18);
         QLabel *appLogoLabel = new QLabel(brandingFrame);
-        if (!appLogoPixmap.isNull()) appLogoLabel->setPixmap(appLogoPixmap.scaled(135,80,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+        if (!appLogoPixmap.isNull())
+            appLogoLabel->setPixmap(appLogoPixmap.scaled(
+                135, 80, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         appLogoLabel->setAlignment(Qt::AlignCenter);
         QLabel *brandingText = new QLabel(brandingFrame);
-        brandingText->setText("<span style='font-size:24px;font-weight:700;'>AerolineaCPP v1.0</span><br><span style='color:#67e8f9;font-size:14px;'>Legacy Restoration Edition</span><br><span style='color:#94a3b8;'>C++17 • Qt 6 • SQL Server</span>");
+        brandingText->setText(
+            QString(
+                "<span style='font-size:24px;font-weight:700;'>AerolineaCPP "
+                "v%1</span><br><span "
+                "style='color:#67e8f9;font-size:14px;'>Legacy Restoration "
+                "Edition</span><br><span style='color:#94a3b8;'>C++17 • Qt 6 • "
+                "SQL Server</span>")
+                .arg(PROJECT_VERSION));
         brandingText->setTextFormat(Qt::RichText);
-        brandingLayout->addWidget(appLogoLabel); brandingLayout->addWidget(brandingText,1);
+        brandingLayout->addWidget(appLogoLabel);
+        brandingLayout->addWidget(brandingText, 1);
 
         QFrame *academicFrame = new QFrame(&dialog);
         QHBoxLayout *academicLayout = new QHBoxLayout(academicFrame);
-        academicLayout->setContentsMargins(18,16,18,16); academicLayout->setSpacing(20);
+        academicLayout->setContentsMargins(18, 16, 18, 16);
+        academicLayout->setSpacing(20);
         QLabel *itlaLogoLabel = new QLabel(academicFrame);
-        const QPixmap itlaPixmap = loadBrandPixmap(ITLA_LOGO_RESOURCE, ITLA_LOGO_FILE);
+        const QPixmap itlaPixmap =
+            loadBrandPixmap(ITLA_LOGO_RESOURCE, ITLA_LOGO_FILE);
         if (!itlaPixmap.isNull()) {
-            itlaLogoLabel->setPixmap(itlaPixmap.scaled(150,95,Qt::KeepAspectRatio,Qt::SmoothTransformation));
-            itlaLogoLabel->setMinimumSize(160,100);
+            itlaLogoLabel->setPixmap(itlaPixmap.scaled(
+                150, 95, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            itlaLogoLabel->setMinimumSize(160, 100);
         } else {
             itlaLogoLabel->setText("ITLA");
-            itlaLogoLabel->setStyleSheet("font-size:28px;font-weight:700;color:#67e8f9;");
+            itlaLogoLabel->setStyleSheet(
+                "font-size:28px;font-weight:700;color:#67e8f9;");
         }
         itlaLogoLabel->setAlignment(Qt::AlignCenter);
         QLabel *academicText = new QLabel(academicFrame);
-        academicText->setWordWrap(true); academicText->setTextFormat(Qt::RichText);
-        academicText->setText("<b style='font-size:16px;'>Proyecto Original</b><br>Estructuras de Datos (SOF-012)<br>Instituto Tecnológico de Las Américas (ITLA)<br>Período académico 2018-C1");
-        academicLayout->addWidget(itlaLogoLabel); academicLayout->addWidget(academicText,1);
+        academicText->setWordWrap(true);
+        academicText->setTextFormat(Qt::RichText);
+        academicText->setText(
+            "<b style='font-size:16px;'>Proyecto Original</b><br>Estructuras "
+            "de Datos (SOF-012)<br>Instituto Tecnológico de Las Américas "
+            "(ITLA)<br>Período académico 2018-C1");
+        academicLayout->addWidget(itlaLogoLabel);
+        academicLayout->addWidget(academicText, 1);
 
         QLabel *details = new QLabel(&dialog);
-        details->setAlignment(Qt::AlignCenter); details->setWordWrap(true); details->setTextFormat(Qt::RichText);
-        details->setText("<p><b>Integrantes del proyecto original</b><br>Francis Jairo Matías Rosario — 2015-2984<br>Jorge de Jesús Torres Pérez — 2016-3515<br>Sebastian Donastor Hernández — 2016-3607</p><p><b>Profesor</b><br>Raydelto Hernández Perera</p><p><b>Modernización tecnológica</b><br>Migración de aplicación de consola a interfaz gráfica<br>C++17 • Qt 6 Widgets • Microsoft SQL Server • CMake<br>Junio 2026</p>");
+        details->setAlignment(Qt::AlignCenter);
+        details->setWordWrap(true);
+        details->setTextFormat(Qt::RichText);
+        details->setText(
+            "<p><b>Integrantes del proyecto original</b><br>Francis Jairo "
+            "Matías Rosario — 2015-2984<br>Jorge de Jesús Torres Pérez — "
+            "2016-3515<br>Sebastian Donastor Hernández — "
+            "2016-3607</p><p><b>Profesor</b><br>Raydelto Hernández "
+            "Perera</p><p><b>Modernización tecnológica</b><br>Migración de "
+            "aplicación de consola a interfaz gráfica<br>C++17 • Qt 6 Widgets "
+            "• Microsoft SQL Server • CMake<br>Junio 2026</p>");
 
         QPushButton *btnCerrar = new QPushButton("Cerrar", &dialog);
         connect(btnCerrar, &QPushButton::clicked, &dialog, &QDialog::accept);
-        layout->addWidget(brandingFrame); layout->addWidget(academicFrame); layout->addWidget(details,1); layout->addWidget(btnCerrar);
+        layout->addWidget(brandingFrame);
+        layout->addWidget(academicFrame);
+        layout->addWidget(details, 1);
+        layout->addWidget(btnCerrar);
         dialog.exec();
     });
 
     DatabaseManager db;
     if (db.conectar()) {
-        ui->cmbOrigen->clear(); ui->cmbDestino->clear();
+        ui->cmbOrigen->clear();
+        ui->cmbDestino->clear();
         const QStringList destinos = db.obtenerDestinos();
-        ui->cmbOrigen->addItems(destinos); ui->cmbDestino->addItems(destinos);
-        ui->lblTotalDestinos->setText("Destinos registrados: " + QString::number(db.contarDestinos()));
-        ui->lblTotalRutas->setText("Rutas registradas: " + QString::number(db.contarRutas()));
-        ui->lblTotalAeronaves->setText("Aeronaves registradas: " + QString::number(db.contarAeronaves()));
-        ui->lblTotalVuelos->setText("Vuelos registrados: " + QString::number(db.contarVuelos()));
-        statusBar()->showMessage("Conectado a SQL Server • " + QString::number(destinos.size()) + " destinos disponibles");
+        ui->cmbOrigen->addItems(destinos);
+        ui->cmbDestino->addItems(destinos);
+        ui->lblTotalDestinos->setText("Destinos registrados: " +
+                                      QString::number(db.contarDestinos()));
+        ui->lblTotalRutas->setText("Rutas registradas: " +
+                                   QString::number(db.contarRutas()));
+        ui->lblTotalAeronaves->setText("Aeronaves registradas: " +
+                                       QString::number(db.contarAeronaves()));
+        ui->lblTotalVuelos->setText("Vuelos registrados: " +
+                                    QString::number(db.contarVuelos()));
+        statusBar()->showMessage("Conectado a SQL Server • " +
+                                 QString::number(destinos.size()) +
+                                 " destinos disponibles");
     } else {
         ui->btnBuscar->setEnabled(false);
-        ui->lblTotalDestinos->setText("Destinos registrados: 0"); ui->lblTotalRutas->setText("Rutas registradas: 0");
-        ui->lblTotalAeronaves->setText("Aeronaves registradas: 0"); ui->lblTotalVuelos->setText("Vuelos registrados: 0");
-        ui->txtResultado->setPlainText("No fue posible conectar con SQL Server.\n\nVerifica la configuración de la base de datos.");
-        setRouteState(ui->lblEstadoRuta, "SIN CONEXIÓN", "#fecaca", "#450a0a", "#991b1b");
+        ui->lblTotalDestinos->setText("Destinos registrados: 0");
+        ui->lblTotalRutas->setText("Rutas registradas: 0");
+        ui->lblTotalAeronaves->setText("Aeronaves registradas: 0");
+        ui->lblTotalVuelos->setText("Vuelos registrados: 0");
+        ui->txtResultado->setPlainText(
+            "No fue posible conectar con SQL Server.\n\nVerifica la "
+            "configuración de la base de datos.");
+        setRouteState(ui->lblEstadoRuta, "SIN CONEXIÓN", "#fecaca", "#450a0a",
+                      "#991b1b");
         statusBar()->showMessage("Sin conexión a SQL Server");
-        QMessageBox::warning(this, "Error de conexión", "No fue posible conectar con SQL Server.\n\nVerifica que el servidor esté disponible y que la base de datos AerolineaDB haya sido creada.");
+        QMessageBox::warning(
+            this, "Error de conexión",
+            "No fue posible conectar con SQL Server.\n\nVerifica que el "
+            "servidor esté disponible y que la base de datos AerolineaDB haya "
+            "sido creada.");
     }
 
     connect(ui->btnLimpiar, &QPushButton::clicked, this, [this]() {
-        if (ui->cmbOrigen->count() > 0) ui->cmbOrigen->setCurrentIndex(0);
-        if (ui->cmbDestino->count() > 1) ui->cmbDestino->setCurrentIndex(1); else if (ui->cmbDestino->count() > 0) ui->cmbDestino->setCurrentIndex(0);
+        if (ui->cmbOrigen->count() > 0)
+            ui->cmbOrigen->setCurrentIndex(0);
+        if (ui->cmbDestino->count() > 1)
+            ui->cmbDestino->setCurrentIndex(1);
+        else if (ui->cmbDestino->count() > 0)
+            ui->cmbDestino->setCurrentIndex(0);
         ui->txtResultado->clear();
-        setRouteState(ui->lblEstadoRuta, "LISTO", "#67e8f9", "#082f49", "#0e7490");
+        setRouteState(ui->lblEstadoRuta, "LISTO", "#67e8f9", "#082f49",
+                      "#0e7490");
         statusBar()->showMessage("Búsqueda limpiada");
         ui->cmbOrigen->setFocus();
     });
@@ -178,44 +245,67 @@ MainWindow::MainWindow(QWidget *parent)
         const QString destino = ui->cmbDestino->currentText().trimmed();
 
         if (origen.isEmpty() || destino.isEmpty()) {
-            ui->txtResultado->setPlainText("Selecciona un origen y un destino.");
-            setRouteState(ui->lblEstadoRuta, "REVISAR", "#fde68a", "#422006", "#a16207");
-            statusBar()->showMessage("Selecciona un origen y un destino"); return;
+            ui->txtResultado->setPlainText(
+                "Selecciona un origen y un destino.");
+            setRouteState(ui->lblEstadoRuta, "REVISAR", "#fde68a", "#422006",
+                          "#a16207");
+            statusBar()->showMessage("Selecciona un origen y un destino");
+            return;
         }
         if (origen.compare(destino, Qt::CaseInsensitive) == 0) {
-            ui->txtResultado->setPlainText("El origen y el destino son iguales.\n\nSelecciona dos destinos diferentes para buscar una ruta.");
-            setRouteState(ui->lblEstadoRuta, "REVISAR", "#fde68a", "#422006", "#a16207");
-            statusBar()->showMessage("Origen y destino deben ser diferentes"); return;
+            ui->txtResultado->setPlainText(
+                "El origen y el destino son iguales.\n\nSelecciona dos "
+                "destinos diferentes para buscar una ruta.");
+            setRouteState(ui->lblEstadoRuta, "REVISAR", "#fde68a", "#422006",
+                          "#a16207");
+            statusBar()->showMessage("Origen y destino deben ser diferentes");
+            return;
         }
 
         ui->btnBuscar->setEnabled(false);
         ui->btnBuscar->setText("Buscando...");
-        setRouteState(ui->lblEstadoRuta, "BUSCANDO", "#bae6fd", "#0c4a6e", "#0284c7");
+        setRouteState(ui->lblEstadoRuta, "BUSCANDO", "#bae6fd", "#0c4a6e",
+                      "#0284c7");
         statusBar()->showMessage("Buscando ruta: " + origen + " → " + destino);
         QCoreApplication::processEvents();
 
         DatabaseManager db;
         if (!db.conectar()) {
-            ui->txtResultado->setPlainText("No fue posible conectar con SQL Server.");
-            setRouteState(ui->lblEstadoRuta, "ERROR", "#fecaca", "#450a0a", "#991b1b");
+            ui->txtResultado->setPlainText(
+                "No fue posible conectar con SQL Server.");
+            setRouteState(ui->lblEstadoRuta, "ERROR", "#fecaca", "#450a0a",
+                          "#991b1b");
             statusBar()->showMessage("Error de conexión a SQL Server");
-            ui->btnBuscar->setText("Buscar ruta"); ui->btnBuscar->setEnabled(true); return;
+            ui->btnBuscar->setText("Buscar ruta");
+            ui->btnBuscar->setEnabled(true);
+            return;
         }
 
-        RutaManager manager(db.obtenerRutas(), db.obtenerVuelos(), db.obtenerAeronaves());
+        RutaManager manager(db.obtenerRutas(), db.obtenerVuelos(),
+                            db.obtenerAeronaves());
         const QString resultado = manager.buscarRuta(origen, destino);
         ui->txtResultado->setPlainText(resultado);
 
-        const bool noEncontrada = resultado.contains("no existe", Qt::CaseInsensitive) || resultado.contains("no se encontr", Qt::CaseInsensitive) || resultado.contains("no hay", Qt::CaseInsensitive);
+        const bool noEncontrada =
+            resultado.contains("no existe", Qt::CaseInsensitive) ||
+            resultado.contains("no se encontr", Qt::CaseInsensitive) ||
+            resultado.contains("no hay", Qt::CaseInsensitive);
         if (noEncontrada) {
-            setRouteState(ui->lblEstadoRuta, "NO DISPONIBLE", "#fde68a", "#422006", "#a16207");
+            setRouteState(ui->lblEstadoRuta, "NO DISPONIBLE", "#fde68a",
+                          "#422006", "#a16207");
             statusBar()->showMessage("No se encontró una ruta disponible");
         } else {
-            setRouteState(ui->lblEstadoRuta, "RUTA ENCONTRADA", "#bbf7d0", "#052e16", "#15803d");
-            statusBar()->showMessage("Ruta calculada: " + origen + " → " + destino);
+            setRouteState(ui->lblEstadoRuta, "RUTA ENCONTRADA", "#bbf7d0",
+                          "#052e16", "#15803d");
+            statusBar()->showMessage("Ruta calculada: " + origen + " → " +
+                                     destino);
         }
-        ui->btnBuscar->setText("Buscar ruta"); ui->btnBuscar->setEnabled(true);
+        ui->btnBuscar->setText("Buscar ruta");
+        ui->btnBuscar->setEnabled(true);
     });
 }
 
-MainWindow::~MainWindow() { delete ui; }
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
