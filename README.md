@@ -1,9 +1,13 @@
 <p align="center">
   <img src="modern-qt-sqlserver/Arolinea-CPP.png" width="420" alt="Logo de AerolineaCPP">
 </p>
-
 <p align="center">
   <img src="https://img.shields.io/badge/ITLA-2018--C1-0057B8?style=for-the-badge" alt="ITLA 2018-C1" />
+</p>
+
+
+<p align="center">
+
   <img src="https://img.shields.io/badge/Estado-Finalizado-success?style=for-the-badge" alt="Estado finalizado" />
   <img src="https://img.shields.io/github/v/release/Jairo0811/Aerolinea?style=for-the-badge&label=Release" alt="GitHub Release" />
 </p>
