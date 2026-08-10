@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include "mainwindow.h"
 
 #include <QApplication>
@@ -7,11 +8,11 @@ int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
 
-    application.setApplicationName("AerolineaCPP");
-    application.setApplicationDisplayName("AerolineaCPP - Sistema de Rutas");
-    application.setApplicationVersion("1.0.0");
-    application.setOrganizationName("JM Software Solutions");
-    application.setOrganizationDomain("github.com/Jairo0811");
+    application.setApplicationName(PROJECT_NAME);
+    application.setApplicationDisplayName(DISPLAY_NAME);
+    application.setApplicationVersion(PROJECT_VERSION);
+    application.setOrganizationName(ORG_NAME);
+    application.setOrganizationDomain(ORG_DOMAIN);
 
     application.setWindowIcon(QIcon(":/aerolineacpp_logo.png"));
 
