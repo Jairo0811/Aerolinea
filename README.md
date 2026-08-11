@@ -127,15 +127,19 @@ SHA-256
 
 ## 🧭 Continuidad académica
 
-Estructuras de Datos fue la segunda de tres asignaturas cursadas con el profesor **Raydelto Hernández Perera**, dentro de una evolución progresiva en el desarrollo de software:
+**Aerolinea** representa la segunda etapa de una trayectoria académica de tres asignaturas cursadas con el profesor **Raydelto Hernández Perera** en el Instituto Tecnológico de Las Américas (ITLA). La relación entre estos proyectos es **formativa y cronológica**: cada uno responde a una asignatura y objetivo distintos, por lo que no deben interpretarse como dependencias técnicas ni como versiones sucesivas de una misma aplicación.
 
-| Orden | Asignatura | Proyecto | Período |
-|---:|---|---|---|
-| 1 | Programación II | [Eventix](https://github.com/Jairo0811/Eventix) | 2017-C2 |
-| 2 | Estructuras de Datos | **Aerolinea** | 2018-C1 |
-| 3 | Programación WEB | [ITLA Crush](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 |
+La secuencia comenzó en **2017-C2** con **Programación II (SOF-004)** y [**Eventix**](https://github.com/Jairo0811/Eventix). Continuó en **2018-C1** con **Estructuras de Datos (SOF-012)**, donde Aerolinea fue desarrollado como proyecto final, y culminó en **2018-C2** con **Programación WEB (SOF-011)** y [**ITLA Crush**](https://github.com/Jairo0811/ITLAcrushReact).
 
-Estos proyectos representan una secuencia académica enfocada en programación, estructuras de datos y desarrollo web y forman parte del proceso de preservación y modernización de proyectos académicos del portafolio.
+| Orden | Código | Asignatura | Proyecto | Período | Enfoque académico |
+|---:|---|---|---|---|---|
+| 1 | SOF-004 | Programación II | [**Eventix**](https://github.com/Jairo0811/Eventix) | 2017-C2 | Programación orientada a objetos, lógica de negocio y construcción de una aplicación completa |
+| 2 | SOF-012 | Estructuras de Datos | **Aerolinea** | 2018-C1 | Estructuras de datos, listas enlazadas, modelado de relaciones y resolución de rutas |
+| 3 | SOF-011 | Programación WEB | [**ITLA Crush**](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 | Desarrollo web, JavaScript, React y Firebase |
+
+Vistos en conjunto, los tres proyectos documentan una evolución desde la construcción de aplicaciones orientadas a objetos, pasando por estructuras y algoritmos, hasta el desarrollo web moderno. Aerolinea ocupa el punto intermedio de esa trayectoria al trasladar el aprendizaje hacia el manejo explícito de estructuras de datos y problemas de recorrido y relaciones.
+
+Cada repositorio conserva su identidad académica original y, cuando aplica, incorpora una restauración o modernización posterior orientada a estándares profesionales y portafolio.
 
 ---
 
@@ -338,18 +342,3 @@ Esto permite generar una distribución reproducible sin depender de que el desar
 | 🎨 **2026** | Rediseño responsive, identidad visual y mejoras de UX |
 | ⚙️ **2026** | Automatización de build y distribución con GitHub Actions |
 | 📦 **2026** | Publicación de AerolineaCPP v1.0.0 para Windows x64 |
-
----
-
-## 👨‍💻 Autor de la modernización
-
-**Francis Jairo Matías Rosario**
-
-Restauración, modernización, integración con SQL Server, diseño de interfaz, automatización de build, documentación y preparación para portafolio profesional.
-
----
-
-<p align="center">
-  <strong>✈️ AerolineaCPP — Legacy Restoration Edition</strong><br>
-  Proyecto académico ITLA 2018-C1 · Restauración y modernización 2026
-</p>
