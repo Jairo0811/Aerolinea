@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -8,11 +9,8 @@ using namespace std;
 
 void limpiarPantalla()
 {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+    // Evita ejecutar un shell o un binario controlado mediante PATH.
+    cout << "\x1B[2J\x1B[H" << flush;
 }
 
 void pausar()
@@ -23,10 +21,17 @@ void pausar()
 
 string leerTexto(const string& mensaje)
 {
-    string texto;
     cout << mensaje;
-    getline(cin, texto);
-    return texto;
+    array<char, 101> buffer{};
+    cin.getline(buffer.data(), static_cast<streamsize>(buffer.size()));
+
+    if (cin.fail() && !cin.eof()) {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return {};
+    }
+
+    return string(buffer.data());
 }
 
 void cargarDestinosIniciales(Paises& paises)
@@ -67,9 +72,7 @@ int main()
         cout << "5. Listar rutas\n";
         cout << "0. Salir\n\n";
 
-        cout << "Seleccione una opcion: ";
-
-        getline(cin, opcion);
+        opcion = leerTexto("Seleccione una opcion: ");
 
         limpiarPantalla();
 

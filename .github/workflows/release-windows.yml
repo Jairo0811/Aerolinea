@@ -1,29 +1,44 @@
 name: Build and Release AerolineaCPP
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version tag to publish"
-        required: false
-        default: "v1.0.0"
+  pull_request:
+    paths:
+      - ".github/workflows/release-windows.yml"
+      - "modern-qt-sqlserver/**"
   push:
     branches:
       - master
     paths:
       - ".github/workflows/release-windows.yml"
       - "modern-qt-sqlserver/**"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to publish (for example, v1.1.0)"
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: aerolinea-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-windows:
     runs-on: windows-2022
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      package_name: ${{ steps.metadata.outputs.package_name }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -32,14 +47,29 @@ jobs:
           arch: "win64_msvc2022_64"
           cache: true
 
-      - name: Resolve version
+      - name: Resolve and validate package metadata
+        id: metadata
         shell: pwsh
+        env:
+          RELEASE_INPUT: ${{ inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          $version = "${{ inputs.version }}"
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            $version = "v1.0.0"
+          if ($env:EVENT_NAME -eq "workflow_dispatch") {
+            $version = $env:RELEASE_INPUT
+            if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') {
+              throw "La versión debe tener formato SemVer, por ejemplo v1.1.0."
+            }
           }
+          else {
+            $version = "ci-$($env:COMMIT_SHA.Substring(0, 12))"
+          }
+
+          $packageName = "AerolineaCPP-$version-Windows-x64"
           "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+          "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "package_name=$packageName" >> $env:GITHUB_OUTPUT
 
       - name: Configure
         shell: pwsh
@@ -52,10 +82,7 @@ jobs:
       - name: Prepare portable package
         shell: pwsh
         run: |
-          $version = $env:RELEASE_VERSION
-          $packageName = "AerolineaCPP-$version-Windows-x64"
-          $packageDir = Join-Path $PWD "dist\$packageName"
-
+          $packageDir = Join-Path $PWD "dist\$env:PACKAGE_NAME"
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
           $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
@@ -67,101 +94,97 @@ jobs:
           }
 
           Copy-Item $exe.FullName (Join-Path $packageDir "AerolineaCPP.exe")
-
           windeployqt --release --compiler-runtime --no-translations (Join-Path $packageDir "AerolineaCPP.exe")
 
           New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "config") | Out-Null
-          New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "branding") | Out-Null
-
-          if (Test-Path "modern-qt-sqlserver\config\database.example.ini") {
-            Copy-Item "modern-qt-sqlserver\config\database.example.ini" (Join-Path $packageDir "config\database.example.ini")
-          }
-
-          if (Test-Path "modern-qt-sqlserver\Aerolinea.sql") {
-            Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
-          }
-
-          Copy-Item "modern-qt-sqlserver\aerolineacpp_logo.png" (Join-Path $packageDir "branding\aerolineacpp_logo.png")
-          Copy-Item "modern-qt-sqlserver\itla_logo.png" (Join-Path $packageDir "branding\itla_logo.png")
+          Copy-Item "modern-qt-sqlserver\config\database.example.ini" (Join-Path $packageDir "config\database.example.ini")
+          Copy-Item "modern-qt-sqlserver\Aerolinea.sql" (Join-Path $packageDir "Aerolinea.sql")
 
           $readmeLines = @(
-            "AerolineaCPP $version",
+            "AerolineaCPP $env:RELEASE_VERSION",
             "=====================",
-            "",
-            "Legacy Restoration Edition",
             "",
             "REQUISITOS",
             "- Windows 10/11 x64",
             "- Microsoft ODBC Driver 17 for SQL Server",
-            "- Microsoft SQL Server",
+            "- Microsoft SQL Server con TLS configurado",
             "",
             "INSTALACIÓN",
             "1. Ejecuta Aerolinea.sql en SQL Server.",
             "2. Copia config\database.example.ini como config\database.ini.",
-            "3. Configura la instancia de SQL Server en database.ini.",
-            "4. Ejecuta AerolineaCPP.exe.",
-            "",
-            "Repositorio:",
-            "https://github.com/Jairo0811/Aerolinea"
+            "3. Configura la instancia; no guardes contraseñas en el archivo.",
+            "4. Para autenticación SQL, define AEROLINEA_DB_USER y AEROLINEA_DB_PASSWORD.",
+            "5. Ejecuta AerolineaCPP.exe."
           )
-
           $readmeLines | Set-Content -Encoding UTF8 (Join-Path $packageDir "LEEME.txt")
 
-          Compress-Archive -Path "$packageDir\*" -DestinationPath "dist\$packageName.zip" -Force
-
-          "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
-          "PACKAGE_ZIP=dist\$packageName.zip" >> $env:GITHUB_ENV
+          $zipPath = "dist\$env:PACKAGE_NAME.zip"
+          Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
+          (Get-FileHash -Algorithm SHA256 $zipPath).Hash.ToLowerInvariant() |
+            Set-Content -Encoding ascii "$zipPath.sha256"
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PACKAGE_NAME }}
-          path: ${{ env.PACKAGE_ZIP }}
+          name: ${{ steps.metadata.outputs.package_name }}
+          path: |
+            dist/${{ steps.metadata.outputs.package_name }}.zip
+            dist/${{ steps.metadata.outputs.package_name }}.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  publish-release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build-windows
+    runs-on: windows-2022
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-windows.outputs.package_name }}
+          path: dist
 
       - name: Publish GitHub Release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.build-windows.outputs.version }}
+          PACKAGE_NAME: ${{ needs.build-windows.outputs.package_name }}
+          TARGET_SHA: ${{ github.sha }}
         run: |
-          $version = $env:RELEASE_VERSION
+          $zipPath = Join-Path $PWD "dist\$env:PACKAGE_NAME.zip"
+          $hashPath = "$zipPath.sha256"
+          if (-not (Test-Path $zipPath) -or -not (Test-Path $hashPath)) {
+            throw "El artefacto o su checksum no están disponibles."
+          }
+
           $notesFile = Join-Path $PWD "release-notes.md"
-
+          $checksum = (Get-Content $hashPath -Raw).Trim()
           $notes = @(
-            "## ✈️ AerolineaCPP $version",
+            "## AerolineaCPP $env:RELEASE_VERSION",
             "",
-            "Primera versión estable de la modernización de **Aerolinea**, proyecto final desarrollado originalmente para **Estructuras de Datos (SOF-012)** en el ITLA durante el período **2018-C1**.",
+            "Aplicación de escritorio Qt 6 con acceso de solo lectura a SQL Server.",
             "",
-            "### 🚀 Características",
+            "### Instalación segura",
             "",
-            "- Interfaz responsive rediseñada con Qt 6 Widgets.",
-            "- Identidad visual azul oscuro y cyan de AerolineaCPP.",
-            "- Persistencia con Microsoft SQL Server.",
-            "- Gestión de destinos, rutas, vuelos y aeronaves.",
-            "- Búsqueda de rutas con escalas.",
-            "- Cálculo de distancia, duración y precio total.",
-            "- Configuración portable mediante database.ini.",
-            "- Ventana Acerca de con créditos académicos y logo institucional del ITLA.",
-            "- Carga de logos con fallback externo para garantizar compatibilidad en la versión portable.",
-            "- Preservación de la versión Legacy original.",
+            '- Mantén `encrypt=true` y usa un certificado válido del servidor.',
+            "- Usa autenticación integrada o las variables de entorno documentadas.",
+            '- Asigna al usuario únicamente el rol `AerolineaReader`.',
             "",
-            "### 📦 Instalación",
-            "",
-            "1. Descarga AerolineaCPP-$version-Windows-x64.zip.",
-            "2. Extrae su contenido completo.",
-            "3. Ejecuta Aerolinea.sql.",
-            "4. Copia config/database.example.ini como config/database.ini.",
-            "5. Configura tu instancia de SQL Server.",
-            "6. Ejecuta AerolineaCPP.exe.",
-            "",
-            "**Estado:** versión estable para portafolio y demostración."
+            ('SHA-256: `{0}`' -f $checksum)
           )
-
           $notes | Set-Content -Encoding UTF8 $notesFile
 
-          if (gh release view $version 2>$null) {
-            gh release upload $version "${{ env.PACKAGE_ZIP }}" --clobber
-            gh release edit $version --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
+          if (gh release view $env:RELEASE_VERSION 2>$null) {
+            gh release upload $env:RELEASE_VERSION $zipPath $hashPath --clobber
+            gh release edit $env:RELEASE_VERSION --notes-file $notesFile
           }
           else {
-            gh release create $version "${{ env.PACKAGE_ZIP }}" --target master --title "AerolineaCPP $version — Legacy Restoration Edition" --notes-file $notesFile
+            gh release create $env:RELEASE_VERSION $zipPath $hashPath `
+              --target $env:TARGET_SHA `
+              --title "AerolineaCPP $env:RELEASE_VERSION" `
+              --notes-file $notesFile
           }
