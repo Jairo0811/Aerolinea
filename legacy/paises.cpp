@@ -75,7 +75,10 @@ bool Paises::introducirDestino(const string& pais)
 {
     const string paisLimpio = limpiarEspacios(pais);
 
-    if (paisLimpio.empty()) {
+    if (paisLimpio.empty() || paisLimpio.size() > 100 ||
+        any_of(paisLimpio.begin(), paisLimpio.end(), [](unsigned char caracter) {
+            return iscntrl(caracter) != 0;
+        })) {
         return false;
     }
 

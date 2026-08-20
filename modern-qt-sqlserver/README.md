@@ -24,9 +24,31 @@ driver=ODBC Driver 17 for SQL Server
 server=localhost\SQLEXPRESS
 database=AerolineaDB
 trustedConnection=true
+encrypt=true
+trustServerCertificate=false
 ```
 
 La aplicación busca la configuración en `config/database.ini`. Si no existe, utiliza `config/database.example.ini` como plantilla.
+
+No guardes usuarios ni contraseñas en `database.ini`. Para autenticación SQL,
+establece `trustedConnection=false` y proporciona las credenciales en las
+variables de entorno `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`. La
+aplicación rechaza conexiones sin cifrado; conserva
+`trustServerCertificate=false` fuera de un entorno local de desarrollo y usa
+un certificado válido en SQL Server.
+
+El script crea el rol `AerolineaReader`, que solo posee permisos `SELECT` sobre
+las cuatro tablas usadas por la aplicación. Asigna a ese rol el usuario de
+Windows o SQL utilizado por el programa; no uses una cuenta administradora.
+
+## Seguridad y límites de confianza
+
+AerolineaCPP es una aplicación de escritorio de consulta y no expone rutas HTTP
+ni una API. La autenticación corresponde a la sesión de Windows y a SQL Server.
+Las consultas son estáticas o parametrizadas; la configuración ODBC se valida y
+se escapa antes de formar la cadena de conexión. Además, la aplicación limita a
+1,000 los registros cargados por entidad y descarta texto o valores numéricos
+fuera de los rangos definidos por el esquema.
 
 ## Compilación en Qt Creator
 
