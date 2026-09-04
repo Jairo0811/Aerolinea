@@ -1,112 +1,152 @@
-# Arquitectura de AerolineaCPP
+# Arquitectura de AerolineaCPP v1.1.0
 
-Aerolinea conserva dos etapas deliberadamente separadas: el **proyecto académico Legacy de 2018**, basado en consola y listas enlazadas, y la **modernización AerolineaCPP de 2026**, construida con C++17, Qt 6 Widgets y SQL Server. La arquitectura moderna no reemplaza ni altera el valor histórico del código Legacy.
+## Propósito
 
-## Vista general de AerolineaCPP
+AerolineaCPP es una aplicación de escritorio de **consulta y optimización de rutas**. Conserva el objetivo académico de Estructuras de Datos y lo amplía con persistencia, GUI, seguridad, pruebas y automatización sin convertir el repositorio en un sistema aeronáutico empresarial.
 
-```mermaid
-flowchart LR
-    User["Usuario"] --> UI["Qt 6 Widgets · MainWindow"]
-    UI --> Route["RutaManager"]
-    UI --> DBM["DatabaseManager"]
+## Vista de alto nivel
 
-    Route --> Domain["Ruta · Vuelo · Destino · Aeronave"]
-    Route --> DBM
-    DBM --> QtSql["Qt SQL / ODBC"]
-    QtSql --> SQL[("SQL Server 2022")]
-
-    Config["config/database.ini"] --> DBM
-    Resources["Qt Resources / Assets"] --> UI
+```text
+Usuario
+  │
+  ▼
+MainWindow (Qt Widgets)
+  │
+  ├──────────────► DatabaseManager
+  │                    │
+  │                    ▼
+  │               Qt SQL / QODBC
+  │                    │
+  │                    ▼
+  │               SQL Server 2022
+  │
+  ▼
+RutaManager
+  │
+  ├── grafo dirigido de Ruta
+  ├── catálogo de Vuelo
+  ├── catálogo de Aeronave
+  └── Dijkstra multicriterio
+         │
+         ▼
+    QVector<Ruta>
 ```
 
-`MainWindow` coordina presentación e interacción. `RutaManager` concentra la lógica de búsqueda y composición de rutas. `DatabaseManager` encapsula la conexión y consultas a SQL Server, evitando que la interfaz manipule directamente detalles de ODBC.
+## Responsabilidades
 
-## Separación de responsabilidades
+### MainWindow
 
-```mermaid
-flowchart TD
-    Presentation["Presentation · Qt Widgets"] --> Application["Application · RutaManager"]
-    Application --> Domain["Domain · Entidades"]
-    Application --> Infrastructure["Infrastructure · DatabaseManager"]
-    Infrastructure --> DB[("SQL Server")]
-    Config["Configuración externa"] --> Infrastructure
+Responsable de presentación e interacción:
+
+- origen y destino;
+- criterio de optimización;
+- indicadores de datos cargados;
+- ejecución de búsquedas;
+- representación textual de resultados y estados.
+
+No contiene consultas SQL ni implementa el algoritmo del grafo.
+
+### DatabaseManager
+
+Encapsula el acceso a SQL Server mediante Qt SQL/ODBC.
+
+Responsabilidades:
+
+- construir una cadena ODBC validada;
+- aplicar TLS y restricciones del driver;
+- obtener configuración no secreta;
+- leer credenciales SQL únicamente desde variables de entorno;
+- consultar destinos, rutas, aeronaves y vuelos;
+- validar límites de los datos recibidos;
+- trabajar con intención de solo lectura.
+
+La aplicación no necesita permisos `INSERT`, `UPDATE`, `DELETE`, `ALTER` ni `CONTROL` durante la operación normal.
+
+### RutaManager
+
+Es el núcleo algorítmico.
+
+Construye el grafo a partir de `QVector<Ruta>` y calcula el camino óptimo según `CriterioRuta`:
+
+```text
+MenosEscalas    peso = 1 por arista
+MenorDistancia  peso = DistanciaKm
+MenorDuracion   peso = DuracionMinutos
+MenorPrecio     peso = Precio del Vuelo
 ```
 
-| Componente | Responsabilidad |
-|---|---|
-| `MainWindow` | Interfaz, comandos, selección de destinos y presentación de resultados |
-| `RutaManager` | Búsqueda de rutas directas/con escalas y cálculo agregado del recorrido |
-| `Ruta`, `Vuelo`, `Destino`, `Aeronave` | Modelo de dominio de la solución |
-| `DatabaseManager` | Apertura de conexión, ejecución de consultas y mapeo de datos |
-| `database.ini` | Configuración externa de la instancia SQL Server |
-| Qt Resources | Logo, iconos y recursos visuales incluidos en el ejecutable |
+El criterio `MenorPrecio` descarta un tramo cuando no existe un vuelo con precio asociado, ya que no es posible comparar de forma válida su costo monetario.
 
-## Búsqueda de rutas
+Dijkstra mantiene para cada destino el mejor costo conocido y la arista predecesora. Al alcanzar el destino reconstruye el camino desde los predecesores.
 
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant W as MainWindow
-    participant R as RutaManager
-    participant D as DatabaseManager
-    participant DB as SQL Server
+### Entidades
 
-    U->>W: origen + destino
-    W->>R: buscarRuta(origen, destino)
-    R->>D: consultar destinos, vuelos y rutas
-    D->>DB: consultas SQL vía ODBC
-    DB-->>D: registros
-    D-->>R: objetos de dominio
-    R->>R: calcular escalas, distancia, duración y precio
-    R-->>W: itinerario resultante
-    W-->>U: mostrar ruta / estado / error
-```
-
-La lógica de cálculo se mantiene fuera de la ventana para que la interfaz no sea responsable de construir itinerarios ni sumar métricas del viaje.
+- `Destino`: nodo del grafo.
+- `Ruta`: arista dirigida con distancia y duración.
+- `Vuelo`: dato operacional asociado a una ruta, incluyendo precio.
+- `Aeronave`: información del equipo asociado al vuelo.
 
 ## Persistencia
 
-```mermaid
-flowchart LR
-    App["AerolineaCPP"] --> DBM["DatabaseManager"]
-    DBM --> Driver["ODBC Driver"]
-    Driver --> SQL[("SQL Server")]
-    SQL --> Destinos["Destinos"]
-    SQL --> Rutas["Rutas"]
-    SQL --> Aeronaves["Aeronaves"]
-    SQL --> Vuelos["Vuelos"]
+`Aerolinea.sql` crea y configura:
+
+- `Destinos`;
+- `Rutas`;
+- `Aeronaves`;
+- `Vuelos`;
+- constraints de dominio;
+- índices únicos;
+- claves foráneas;
+- datos seed;
+- rol `AerolineaReader`.
+
+El script es transaccional e idempotente. GitHub Actions lo ejecuta dos veces sobre SQL Server 2022 para verificar el contrato de instalación.
+
+## Seguridad
+
+```text
+config/database.ini
+   │
+   ├── driver / servidor / base / flags TLS
+   └── NO contiene contraseñas
+
+AEROLINEA_DB_USER
+AEROLINEA_DB_PASSWORD
+   │
+   ▼
+DatabaseManager
+   │
+   ▼
+ODBC + TLS
+   │
+   ▼
+SQL Server
+   │
+   ▼
+AerolineaReader (SELECT only)
 ```
 
-La conexión se configura externamente para evitar acoplar el ejecutable a una instancia específica. Las credenciales locales no deben versionarse.
+Controles adicionales:
 
-## Build y distribución
+- whitelist de ODBC Driver 17/18;
+- escape/validación de atributos de conexión;
+- timeout;
+- límites de filas;
+- validación de identificadores, texto y valores numéricos;
+- queries estáticas o parametrizadas;
+- mitigaciones de compilador/linker.
 
-```mermaid
-flowchart LR
-    Source["C++17 / Qt 6"] --> CMake["CMake"]
-    CMake --> Build["Build Windows x64"]
-    Build --> Deploy["Qt deployment / DLLs / Plugins"]
-    Config["database.example.ini"] --> Package["Paquete portable"]
-    SQLScript["Aerolinea.sql"] --> Package
-    Deploy --> Package
-    Actions["GitHub Actions"] --> Build
-    Package --> Release["GitHub Releases"]
-```
+## Pruebas
 
-## Relación con Legacy
+`tests/rutamanager_tests.cpp` cubre el comportamiento algorítmico sin necesitar una GUI ni SQL Server.
 
-```mermaid
-flowchart TB
-    Academic["2018-C1 · Proyecto académico"] --> Legacy["legacy/ · C++ consola / listas enlazadas"]
-    Academic --> Concept["Concepto: rutas y estructuras de datos"]
-    Concept --> Modern["2026 · AerolineaCPP"]
-    Modern --> Qt["Qt 6 Widgets"]
-    Modern --> SQL["SQL Server"]
-    Modern --> CMake["CMake / Release portable"]
-```
+El pipeline usa dos capas:
 
-Legacy y AerolineaCPP comparten contexto académico y concepto funcional, pero permanecen técnicamente separados. Esto permite comparar la evolución del proyecto sin reescribir retrospectivamente el código original.
+1. **Unit tests**: Qt Test + CTest sobre Windows.
+2. **Database contract**: SQL Server 2022 real sobre Linux, incluyendo bootstrap doble e invariantes del esquema/seed.
 
-## Criterio de evolución
+## Distribución
 
-La aplicación debe conservar una separación clara entre UI, lógica de rutas y acceso a datos. Nuevas integraciones —por ejemplo APIs aeronáuticas externas— deberían incorporarse como servicios independientes detrás de interfaces, no directamente en `MainWindow`.
+GitHub Actions produce un ZIP portable para Windows x64 mediante `windeployqt`, genera SHA-256 y separa el job de compilación del job con permiso de publicación.
+
+Una release manual solo puede publicarse si build, unit tests y database contract finalizan correctamente.
