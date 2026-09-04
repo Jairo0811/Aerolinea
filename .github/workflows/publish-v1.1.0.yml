@@ -129,6 +129,7 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: Jairo0811/Aerolinea
           TARGET_SHA: ${{ github.sha }}
         run: |
           $version = "v1.1.0"
