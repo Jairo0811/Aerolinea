@@ -1,69 +1,41 @@
-# ✈️ AerolineaCPP
+# AerolineaCPP v1.1.0
 
-Versión modernizada del proyecto académico **Aerolinea**, desarrollada con C++, Qt 6 Widgets y Microsoft SQL Server.
+**Final Portfolio Edition** de la modernización de Aerolinea.
 
-## Requisitos
+## Objetivo
 
-- Qt 6.5 o superior con Qt Widgets y Qt SQL
-- CMake 3.19 o superior
-- MinGW 64-bit o MSVC compatible con Qt
-- Microsoft SQL Server / SQL Server Express
-- Microsoft ODBC Driver 17 for SQL Server
+Aplicación Qt 6/C++17 de consulta y optimización de rutas aéreas almacenadas en Microsoft SQL Server. El motor permite seleccionar el recorrido con:
 
-## Configuración de la base de datos
+- menos escalas;
+- menor distancia;
+- menor duración;
+- menor precio.
 
-1. Ejecuta `Aerolinea.sql` en SQL Server Management Studio.
-2. Revisa `config/database.ini`.
-3. Cambia `server` por el nombre de tu instancia SQL Server cuando sea necesario.
+Los criterios ponderados utilizan Dijkstra.
 
-Ejemplo:
+## Build local
 
-```ini
-[database]
-driver=ODBC Driver 17 for SQL Server
-server=localhost\SQLEXPRESS
-database=AerolineaDB
-trustedConnection=true
-encrypt=true
-trustServerCertificate=false
+```bash
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
 ```
 
-La aplicación busca la configuración en `config/database.ini`. Si no existe, utiliza `config/database.example.ini` como plantilla.
+## Base de datos
 
-No guardes usuarios ni contraseñas en `database.ini`. Para autenticación SQL,
-establece `trustedConnection=false` y proporciona las credenciales en las
-variables de entorno `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`. La
-aplicación rechaza conexiones sin cifrado; conserva
-`trustServerCertificate=false` fuera de un entorno local de desarrollo y usa
-un certificado válido en SQL Server.
+1. Ejecuta `Aerolinea.sql` en SQL Server.
+2. Copia `config/database.example.ini` a `config/database.ini`.
+3. Mantén `encrypt=true` y `trustServerCertificate=false` fuera de entornos locales controlados.
+4. Prefiere autenticación integrada.
+5. Para autenticación SQL utiliza `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`.
+6. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
 
-El script crea el rol `AerolineaReader`, que solo posee permisos `SELECT` sobre
-las cuatro tablas usadas por la aplicación. Asigna a ese rol el usuario de
-Windows o SQL utilizado por el programa; no uses una cuenta administradora.
+`Aerolinea.sql` es idempotente y CI comprueba que pueda ejecutarse dos veces sobre SQL Server 2022 sin duplicar el seed.
 
-## Seguridad y límites de confianza
+## Seguridad
 
-AerolineaCPP es una aplicación de escritorio de consulta y no expone rutas HTTP
-ni una API. La autenticación corresponde a la sesión de Windows y a SQL Server.
-Las consultas son estáticas o parametrizadas; la configuración ODBC se valida y
-se escapa antes de formar la cadena de conexión. Además, la aplicación limita a
-1,000 los registros cargados por entidad y descarta texto o valores numéricos
-fuera de los rangos definidos por el esquema.
+La aplicación es de escritorio y no expone endpoints HTTP. El límite de confianza está en la sesión local, el archivo de configuración no secreto, las variables de entorno y SQL Server.
 
-## Compilación en Qt Creator
+## Estado
 
-1. Abre `CMakeLists.txt` desde Qt Creator.
-2. Selecciona el kit Desktop Qt 6.x MinGW 64-bit.
-3. Ejecuta **Run CMake**.
-4. Compila y ejecuta el proyecto.
-
-CMake copia automáticamente la carpeta `config` junto al ejecutable.
-
-## Funcionalidades
-
-- Consulta dinámica de destinos, rutas, aeronaves y vuelos
-- Búsqueda de rutas con escalas
-- Distancia y duración total
-- Precio total del viaje
-- Información del vuelo y aeronave asignada
-- Créditos históricos del proyecto original ITLA 2018-C1
+**Portfolio Complete / Maintenance.** No es un sistema de reservas ni de operación real de aerolíneas.

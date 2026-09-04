@@ -1,5 +1,31 @@
 #include "rutamanager.h"
 
+#include <QHash>
+
+#include <limits>
+#include <queue>
+#include <vector>
+
+namespace
+{
+constexpr double INFINITO = std::numeric_limits<double>::infinity();
+
+struct EstadoBusqueda
+{
+    QString destino;
+    double costo;
+};
+
+struct MayorCosto
+{
+    bool operator()(const EstadoBusqueda& izquierda,
+                    const EstadoBusqueda& derecha) const
+    {
+        return izquierda.costo > derecha.costo;
+    }
+};
+}
+
 RutaManager::RutaManager()
 {
     rutas.append(Ruta(1, "Miami", "Orlando", 378, 70));
@@ -11,9 +37,8 @@ RutaManager::RutaManager()
 }
 
 RutaManager::RutaManager(const QVector<Ruta>& rutas)
+    : rutas(rutas)
 {
-    this->rutas = rutas;
-
     for (const Ruta& ruta : rutas) {
         if (!existeDestino(ruta.obtenerOrigen())) {
             destinos.append(Destino(destinos.size() + 1, ruta.obtenerOrigen()));
@@ -25,7 +50,8 @@ RutaManager::RutaManager(const QVector<Ruta>& rutas)
     }
 }
 
-RutaManager::RutaManager(const QVector<Ruta>& rutas, const QVector<Vuelo>& vuelos)
+RutaManager::RutaManager(const QVector<Ruta>& rutas,
+                         const QVector<Vuelo>& vuelos)
     : RutaManager(rutas)
 {
     this->vuelos = vuelos;
@@ -42,7 +68,7 @@ RutaManager::RutaManager(const QVector<Ruta>& rutas,
 bool RutaManager::existeDestino(const QString& nombre) const
 {
     for (const Destino& destino : destinos) {
-        if (destino.obtenerNombre() == nombre) {
+        if (destino.obtenerNombre().compare(nombre, Qt::CaseInsensitive) == 0) {
             return true;
         }
     }
@@ -66,7 +92,7 @@ QVector<Ruta> RutaManager::obtenerRutasDesde(const QString& origen) const
     QVector<Ruta> disponibles;
 
     for (const Ruta& ruta : rutas) {
-        if (ruta.obtenerOrigen() == origen) {
+        if (ruta.obtenerOrigen().compare(origen, Qt::CaseInsensitive) == 0) {
             disponibles.append(ruta);
         }
     }
@@ -96,9 +122,130 @@ Aeronave RutaManager::buscarAeronavePorId(int aeronaveId) const
     return Aeronave();
 }
 
-QString RutaManager::buscarRuta(const QString& origen, const QString& destino) const
+double RutaManager::costoTramo(const Ruta& ruta, CriterioRuta criterio) const
 {
-    if (origen == destino) {
+    switch (criterio) {
+    case CriterioRuta::MenosEscalas:
+        return 1.0;
+    case CriterioRuta::MenorDistancia:
+        return static_cast<double>(ruta.obtenerDistanciaKm());
+    case CriterioRuta::MenorDuracion:
+        return static_cast<double>(ruta.obtenerDuracionMinutos());
+    case CriterioRuta::MenorPrecio: {
+        const Vuelo vuelo = buscarVueloPorRutaId(ruta.obtenerId());
+        return vuelo.obtenerId() != 0 ? vuelo.obtenerPrecio() : INFINITO;
+    }
+    }
+
+    return INFINITO;
+}
+
+QVector<Ruta> RutaManager::calcularRuta(const QString& origen,
+                                        const QString& destino,
+                                        CriterioRuta criterio) const
+{
+    QVector<Ruta> vacia;
+
+    if (origen.compare(destino, Qt::CaseInsensitive) == 0 ||
+        !existeDestino(origen) || !existeDestino(destino)) {
+        return vacia;
+    }
+
+    QHash<QString, double> costos;
+    QHash<QString, Ruta> predecesores;
+
+    for (const Destino& item : destinos) {
+        costos.insert(item.obtenerNombre(), INFINITO);
+    }
+
+    QString origenCanonico;
+    QString destinoCanonico;
+    for (const Destino& item : destinos) {
+        if (item.obtenerNombre().compare(origen, Qt::CaseInsensitive) == 0) {
+            origenCanonico = item.obtenerNombre();
+        }
+        if (item.obtenerNombre().compare(destino, Qt::CaseInsensitive) == 0) {
+            destinoCanonico = item.obtenerNombre();
+        }
+    }
+
+    costos[origenCanonico] = 0.0;
+
+    std::priority_queue<EstadoBusqueda,
+                        std::vector<EstadoBusqueda>,
+                        MayorCosto> pendientes;
+    pendientes.push({origenCanonico, 0.0});
+
+    while (!pendientes.empty()) {
+        const EstadoBusqueda actual = pendientes.top();
+        pendientes.pop();
+
+        if (actual.costo > costos.value(actual.destino, INFINITO)) {
+            continue;
+        }
+
+        if (actual.destino == destinoCanonico) {
+            break;
+        }
+
+        for (const Ruta& ruta : obtenerRutasDesde(actual.destino)) {
+            const double costoArista = costoTramo(ruta, criterio);
+            if (costoArista == INFINITO) {
+                continue;
+            }
+
+            const QString siguiente = ruta.obtenerDestino();
+            const double nuevoCosto = actual.costo + costoArista;
+
+            if (nuevoCosto < costos.value(siguiente, INFINITO)) {
+                costos[siguiente] = nuevoCosto;
+                predecesores.insert(siguiente, ruta);
+                pendientes.push({siguiente, nuevoCosto});
+            }
+        }
+    }
+
+    if (!predecesores.contains(destinoCanonico)) {
+        return vacia;
+    }
+
+    QVector<Ruta> rutaFinal;
+    QString actual = destinoCanonico;
+
+    while (actual != origenCanonico) {
+        if (!predecesores.contains(actual)) {
+            return vacia;
+        }
+
+        const Ruta tramo = predecesores.value(actual);
+        rutaFinal.prepend(tramo);
+        actual = tramo.obtenerOrigen();
+    }
+
+    return rutaFinal;
+}
+
+QString RutaManager::nombreCriterio(CriterioRuta criterio)
+{
+    switch (criterio) {
+    case CriterioRuta::MenosEscalas:
+        return "Menos escalas";
+    case CriterioRuta::MenorDistancia:
+        return "Menor distancia";
+    case CriterioRuta::MenorDuracion:
+        return "Menor duración";
+    case CriterioRuta::MenorPrecio:
+        return "Menor precio";
+    }
+
+    return "Menos escalas";
+}
+
+QString RutaManager::buscarRuta(const QString& origen,
+                                const QString& destino,
+                                CriterioRuta criterio) const
+{
+    if (origen.compare(destino, Qt::CaseInsensitive) == 0) {
         return "Estás en ese mismo destino.";
     }
 
@@ -106,98 +253,58 @@ QString RutaManager::buscarRuta(const QString& origen, const QString& destino) c
         return "El origen o destino no existe.";
     }
 
-    QVector<QString> cola;
-    QVector<QString> visitados;
-    QVector<Ruta> camino;
-
-    cola.append(origen);
-    visitados.append(origen);
-
-    while (!cola.isEmpty()) {
-        QString actual = cola.first();
-        cola.removeFirst();
-
-        QVector<Ruta> rutasDisponibles = obtenerRutasDesde(actual);
-
-        for (const Ruta& ruta : rutasDisponibles) {
-            QString siguiente = ruta.obtenerDestino();
-
-            if (visitados.contains(siguiente)) {
-                continue;
-            }
-
-            visitados.append(siguiente);
-            cola.append(siguiente);
-            camino.append(ruta);
-
-            if (siguiente == destino) {
-                QString resultado = "Ruta encontrada:\n\n";
-                int distanciaTotal = 0;
-                int duracionTotal = 0;
-                double precioTotal = 0.0;
-
-                QString reconstruir = destino;
-                QVector<Ruta> rutaFinal;
-
-                while (reconstruir != origen) {
-                    bool encontrado = false;
-
-                    for (int i = camino.size() - 1; i >= 0; --i) {
-                        if (camino[i].obtenerDestino() == reconstruir) {
-                            rutaFinal.prepend(camino[i]);
-                            reconstruir = camino[i].obtenerOrigen();
-                            encontrado = true;
-                            break;
-                        }
-                    }
-
-                    if (!encontrado) {
-                        return "No se pudo reconstruir la ruta.";
-                    }
-                }
-
-                for (const Ruta& tramo : rutaFinal) {
-                    resultado += tramo.obtenerOrigen() + " → " + tramo.obtenerDestino() + "\n";
-                    resultado += "Distancia: " + QString::number(tramo.obtenerDistanciaKm()) + " km\n";
-                    resultado += "Duración: " + QString::number(tramo.obtenerDuracionMinutos()) + " min\n";
-
-                    Vuelo vuelo = buscarVueloPorRutaId(tramo.obtenerId());
-
-                    if (vuelo.obtenerId() != 0) {
-                        resultado += "Vuelo: " + vuelo.obtenerCodigoVuelo() + "\n";
-                        resultado += "Aerolínea: " + vuelo.obtenerAerolinea() + "\n";
-                        resultado += "Precio: US$" + QString::number(vuelo.obtenerPrecio(), 'f', 2) + "\n";
-
-                        precioTotal += vuelo.obtenerPrecio();
-
-                        Aeronave aeronave = buscarAeronavePorId(vuelo.obtenerAeronaveId());
-
-                        if (aeronave.obtenerId() != 0) {
-                            resultado += "Aeronave: " + aeronave.obtenerModelo() + "\n";
-                            resultado += "Fabricante: " + aeronave.obtenerFabricante() + "\n";
-                            resultado += "Capacidad: " + QString::number(aeronave.obtenerCapacidad()) + " pasajeros\n";
-                        }
-                    } else {
-                        resultado += "Vuelo: No disponible\n";
-                    }
-
-                    resultado += "\n";
-
-                    distanciaTotal += tramo.obtenerDistanciaKm();
-                    duracionTotal += tramo.obtenerDuracionMinutos();
-                }
-
-                int escalas = rutaFinal.size() > 0 ? rutaFinal.size() - 1 : 0;
-
-                resultado += "Escalas: " + QString::number(escalas) + "\n";
-                resultado += "Distancia total: " + QString::number(distanciaTotal) + " km\n";
-                resultado += "Duración total: " + QString::number(duracionTotal) + " min\n";
-                resultado += "Precio total: US$" + QString::number(precioTotal, 'f', 2);
-
-                return resultado;
-            }
+    const QVector<Ruta> rutaFinal = calcularRuta(origen, destino, criterio);
+    if (rutaFinal.isEmpty()) {
+        if (criterio == CriterioRuta::MenorPrecio) {
+            return "No existe una ruta con precios de vuelo disponibles entre esos destinos.";
         }
+        return "No existe una ruta disponible entre esos destinos.";
     }
 
-    return "No existe una ruta disponible entre esos destinos.";
+    QString resultado = "Ruta encontrada\n";
+    resultado += "Criterio: " + nombreCriterio(criterio) + "\n\n";
+
+    int distanciaTotal = 0;
+    int duracionTotal = 0;
+    double precioTotal = 0.0;
+    bool precioCompleto = true;
+
+    for (const Ruta& tramo : rutaFinal) {
+        resultado += tramo.obtenerOrigen() + " → " + tramo.obtenerDestino() + "\n";
+        resultado += "Distancia: " + QString::number(tramo.obtenerDistanciaKm()) + " km\n";
+        resultado += "Duración: " + QString::number(tramo.obtenerDuracionMinutos()) + " min\n";
+
+        const Vuelo vuelo = buscarVueloPorRutaId(tramo.obtenerId());
+        if (vuelo.obtenerId() != 0) {
+            resultado += "Vuelo: " + vuelo.obtenerCodigoVuelo() + "\n";
+            resultado += "Aerolínea: " + vuelo.obtenerAerolinea() + "\n";
+            resultado += "Precio: US$" + QString::number(vuelo.obtenerPrecio(), 'f', 2) + "\n";
+            precioTotal += vuelo.obtenerPrecio();
+
+            const Aeronave aeronave = buscarAeronavePorId(vuelo.obtenerAeronaveId());
+            if (aeronave.obtenerId() != 0) {
+                resultado += "Aeronave: " + aeronave.obtenerModelo() + "\n";
+                resultado += "Fabricante: " + aeronave.obtenerFabricante() + "\n";
+                resultado += "Capacidad: " + QString::number(aeronave.obtenerCapacidad()) + " pasajeros\n";
+            }
+        } else {
+            resultado += "Vuelo: No disponible\n";
+            precioCompleto = false;
+        }
+
+        resultado += "\n";
+        distanciaTotal += tramo.obtenerDistanciaKm();
+        duracionTotal += tramo.obtenerDuracionMinutos();
+    }
+
+    const int escalas = rutaFinal.isEmpty() ? 0 : rutaFinal.size() - 1;
+    resultado += "Resumen\n";
+    resultado += "Escalas: " + QString::number(escalas) + "\n";
+    resultado += "Distancia total: " + QString::number(distanciaTotal) + " km\n";
+    resultado += "Duración total: " + QString::number(duracionTotal) + " min\n";
+    resultado += precioCompleto
+        ? "Precio total: US$" + QString::number(precioTotal, 'f', 2)
+        : "Precio total: No disponible";
+
+    return resultado;
 }
