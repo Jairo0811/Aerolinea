@@ -1,0 +1,175 @@
+name: Publish AerolineaCPP v1.1.0 Final Portfolio Edition
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/publish-v1.1.0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aerolinea-v1.1.0-final-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Build and test Windows release
+    runs-on: windows-2022
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          cache: true
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S modern-qt-sqlserver -B build -A x64 -DBUILD_TESTING=ON
+
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - name: Run unit tests
+        shell: pwsh
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Prepare v1.1.0 portable package
+        shell: pwsh
+        run: |
+          $version = "v1.1.0"
+          $packageName = "AerolineaCPP-$version-Windows-x64"
+          $packageDir = Join-Path $PWD "dist\$packageName"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+          $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
+            Where-Object { $_.FullName -match '\\Release\\' } |
+            Select-Object -First 1
+
+          if (-not $exe) {
+            throw "No se encontró AerolineaCPP.exe en la compilación Release."
+          }
+
+          Copy-Item $exe.FullName (Join-Path $packageDir "AerolineaCPP.exe")
+          windeployqt --release --compiler-runtime --no-translations `
+            (Join-Path $packageDir "AerolineaCPP.exe")
+
+          New-Item -ItemType Directory -Force `
+            -Path (Join-Path $packageDir "config") | Out-Null
+          Copy-Item "modern-qt-sqlserver\config\database.example.ini" `
+            (Join-Path $packageDir "config\database.example.ini")
+          Copy-Item "modern-qt-sqlserver\Aerolinea.sql" `
+            (Join-Path $packageDir "Aerolinea.sql")
+
+          $readmeLines = @(
+            "AerolineaCPP v1.1.0",
+            "===================",
+            "",
+            "Final Portfolio Edition",
+            "",
+            "REQUISITOS",
+            "- Windows 10/11 x64",
+            "- Microsoft ODBC Driver 17 o 18 for SQL Server",
+            "- Microsoft SQL Server con TLS configurado",
+            "",
+            "INSTALACIÓN",
+            "1. Ejecuta Aerolinea.sql en SQL Server.",
+            "2. Copia config\database.example.ini como config\database.ini.",
+            "3. Configura la instancia; no guardes contraseñas en el archivo.",
+            "4. Para autenticación SQL, define AEROLINEA_DB_USER y AEROLINEA_DB_PASSWORD.",
+            "5. Asigna al usuario únicamente el rol AerolineaReader.",
+            "6. Ejecuta AerolineaCPP.exe."
+          )
+          $readmeLines | Set-Content -Encoding UTF8 `
+            (Join-Path $packageDir "LEEME.txt")
+
+          $zipPath = "dist\$packageName.zip"
+          Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
+          (Get-FileHash -Algorithm SHA256 $zipPath).Hash.ToLowerInvariant() |
+            Set-Content -Encoding ascii "$zipPath.sha256"
+
+      - name: Upload verified release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AerolineaCPP-v1.1.0-Windows-x64
+          path: |
+            dist/AerolineaCPP-v1.1.0-Windows-x64.zip
+            dist/AerolineaCPP-v1.1.0-Windows-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: Publish GitHub Release
+    needs: build-and-test
+    runs-on: windows-2022
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AerolineaCPP-v1.1.0-Windows-x64
+          path: dist
+
+      - name: Publish v1.1.0
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          $version = "v1.1.0"
+          $zipPath = Join-Path $PWD "dist\AerolineaCPP-v1.1.0-Windows-x64.zip"
+          $hashPath = "$zipPath.sha256"
+
+          if (-not (Test-Path $zipPath) -or -not (Test-Path $hashPath)) {
+            throw "El artefacto verificado o su checksum no están disponibles."
+          }
+
+          $checksum = (Get-Content $hashPath -Raw).Trim()
+          $notesFile = Join-Path $PWD "release-notes.md"
+          $notes = @(
+            "## AerolineaCPP v1.1.0 — Final Portfolio Edition",
+            "",
+            "Cierre profesional de la modernización del proyecto académico de Estructuras de Datos (ITLA, 2018-C1).",
+            "",
+            "### Destacado",
+            "",
+            "- Optimización de rutas por menos escalas, menor distancia, menor duración o menor precio.",
+            "- Motor multicriterio basado en Dijkstra.",
+            "- Pruebas unitarias automatizadas de RutaManager.",
+            "- Bootstrap SQL Server idempotente validado previamente en CI.",
+            "- Conexión SQL cifrada, credenciales fuera del INI y rol AerolineaReader.",
+            "",
+            "**Estado:** Portfolio Complete / Maintenance.",
+            "",
+            ('SHA-256: `{0}`' -f $checksum)
+          )
+          $notes | Set-Content -Encoding UTF8 $notesFile
+
+          if (gh release view $version 2>$null) {
+            gh release upload $version $zipPath $hashPath --clobber
+            gh release edit $version `
+              --target $env:TARGET_SHA `
+              --title "AerolineaCPP v1.1.0 — Final Portfolio Edition" `
+              --notes-file $notesFile
+          }
+          else {
+            gh release create $version $zipPath $hashPath `
+              --target $env:TARGET_SHA `
+              --title "AerolineaCPP v1.1.0 — Final Portfolio Edition" `
+              --notes-file $notesFile
+          }
