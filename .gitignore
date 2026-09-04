@@ -43,3 +43,4 @@ Thumbs.db
 # Optional local database/backups
 *.bak
 *.tmp
+modern-qt-sqlserver/config/database.ini

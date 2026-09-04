@@ -31,6 +31,7 @@ public:
 private:
     QString obtenerRutaConfiguracion() const;
     QString construirCadenaConexion() const;
+    static bool textoSeguro(const QString& value, qsizetype maximumLength);
 
     QSqlDatabase db;
 };

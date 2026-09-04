@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.19)
 project(AerolineaCPP VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Sql)
 
@@ -52,9 +55,9 @@ endif()
 add_custom_command(TARGET AerolineaCPP POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory
             "$<TARGET_FILE_DIR:AerolineaCPP>/config"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/config"
-            "$<TARGET_FILE_DIR:AerolineaCPP>/config"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/config/database.example.ini"
+            "$<TARGET_FILE_DIR:AerolineaCPP>/config/database.example.ini"
     COMMAND ${CMAKE_COMMAND} -E make_directory
             "$<TARGET_FILE_DIR:AerolineaCPP>/branding"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -72,6 +75,19 @@ target_link_libraries(AerolineaCPP
         Qt::Widgets
         Qt::Sql
 )
+
+if(MSVC)
+    target_compile_options(AerolineaCPP PRIVATE /W4 /permissive- /sdl /guard:cf)
+    target_link_options(AerolineaCPP PRIVATE /DYNAMICBASE /NXCOMPAT /guard:cf)
+else()
+    target_compile_options(AerolineaCPP PRIVATE
+        -Wall -Wextra -Wpedantic -fstack-protector-strong
+        $<$<CONFIG:Release>:-D_FORTIFY_SOURCE=3>
+    )
+    if(UNIX AND NOT APPLE)
+        target_link_options(AerolineaCPP PRIVATE -Wl,-z,relro,-z,now)
+    endif()
+endif()
 
 install(TARGETS AerolineaCPP
     BUNDLE  DESTINATION .

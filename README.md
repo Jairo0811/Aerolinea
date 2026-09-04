@@ -71,6 +71,7 @@ La versión moderna ofrece una interfaz de escritorio en tema oscuro, identidad 
 - 🏛️ Identidad académica del ITLA preservada dentro de la aplicación.
 - 🖼️ Recursos visuales embebidos y fallback externo para la distribución portable.
 - ⚙️ Configuración externa de la conexión mediante `database.ini`.
+- 🔐 Conexión SQL cifrada, credenciales mediante variables de entorno y rol de solo lectura.
 
 ---
 
@@ -101,6 +102,22 @@ El paquete publicado incluye el ejecutable, dependencias de Qt, plugins requerid
 SHA-256
 541317665042110010749f27175bfd1eb7a9622278c8cc411ecf66176099c963
 ```
+
+> Las nuevas compilaciones generan un archivo `.sha256` junto al ZIP. El hash
+> anterior corresponde únicamente al artefacto histórico v1.0.0.
+
+### Configuración segura de SQL Server
+
+- Mantén `encrypt=true` y `trustServerCertificate=false` en producción.
+- Usa autenticación integrada siempre que sea posible.
+- Si necesitas autenticación SQL, define `AEROLINEA_DB_USER` y
+  `AEROLINEA_DB_PASSWORD`; no escribas secretos en `database.ini`.
+- Asigna el usuario al rol `AerolineaReader` creado por `Aerolinea.sql` y no a
+  roles administrativos.
+
+La aplicación es de escritorio y no publica endpoints HTTP. El límite de
+acceso es la sesión local de Windows más la autenticación y autorización de SQL
+Server.
 
 ---
 
