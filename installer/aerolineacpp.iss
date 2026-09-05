@@ -63,9 +63,6 @@ Name: "{autodesktop}\AerolineaCPP"; Filename: "{app}\AerolineaCPP.exe"; WorkingD
 [Run]
 Filename: "{app}\AerolineaCPP.exe"; Description: "Ejecutar AerolineaCPP"; Flags: nowait postinstall skipifsilent
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{app}\config"
-
 [Code]
 function InitializeSetup(): Boolean;
 begin
