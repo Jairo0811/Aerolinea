@@ -1,0 +1,175 @@
+name: Build and Publish AerolineaCPP v1.1.0 Installer
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/publish-installer-v1.1.0.yml"
+      - "installer/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aerolinea-v1.1.0-installer
+  cancel-in-progress: true
+
+jobs:
+  installer:
+    name: Build, validate and publish Setup.exe
+    runs-on: windows-2022
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          cache: true
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S modern-qt-sqlserver -B build -A x64 -DBUILD_TESTING=ON
+
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - name: Run unit tests
+        shell: pwsh
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Prepare portable payload
+        shell: pwsh
+        run: |
+          $packageDir = Join-Path $PWD "dist\AerolineaCPP-v1.1.0-Windows-x64"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+          $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
+            Where-Object { $_.FullName -match '\\Release\\' } |
+            Select-Object -First 1
+
+          if (-not $exe) {
+            throw "No se encontró AerolineaCPP.exe en la compilación Release."
+          }
+
+          Copy-Item $exe.FullName (Join-Path $packageDir "AerolineaCPP.exe")
+          windeployqt --release --compiler-runtime --no-translations `
+            (Join-Path $packageDir "AerolineaCPP.exe")
+
+          New-Item -ItemType Directory -Force `
+            -Path (Join-Path $packageDir "config") | Out-Null
+          Copy-Item "modern-qt-sqlserver\config\database.example.ini" `
+            (Join-Path $packageDir "config\database.example.ini")
+          Copy-Item "modern-qt-sqlserver\Aerolinea.sql" `
+            (Join-Path $packageDir "Aerolinea.sql")
+
+          @(
+            "AerolineaCPP v1.1.0",
+            "===================",
+            "",
+            "Final Portfolio Edition",
+            "",
+            "REQUISITOS",
+            "- Windows 10/11 x64",
+            "- Microsoft ODBC Driver 17 o 18 for SQL Server",
+            "- Microsoft SQL Server con TLS configurado",
+            "",
+            "INSTALACIÓN",
+            "1. Ejecuta Aerolinea.sql en SQL Server.",
+            "2. Copia config\database.example.ini como config\database.ini.",
+            "3. Configura la instancia; no guardes contraseñas en el archivo.",
+            "4. Para autenticación SQL, define AEROLINEA_DB_USER y AEROLINEA_DB_PASSWORD.",
+            "5. Asigna al usuario únicamente el rol AerolineaReader.",
+            "6. Ejecuta AerolineaCPP.exe."
+          ) | Set-Content -Encoding UTF8 (Join-Path $packageDir "LEEME.txt")
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          $sourceDir = Join-Path $PWD "dist\AerolineaCPP-v1.1.0-Windows-x64"
+          $outputDir = Join-Path $PWD "dist\installer"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            throw "No se encontró ISCC.exe de Inno Setup."
+          }
+
+          & $iscc "/DSourceDir=$sourceDir" "/DOutputDir=$outputDir" "installer\aerolineacpp.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup terminó con código $LASTEXITCODE."
+          }
+
+          $setup = Join-Path $outputDir "AerolineaCPP-v1.1.0-Setup.exe"
+          if (-not (Test-Path $setup)) {
+            throw "No se generó AerolineaCPP-v1.1.0-Setup.exe."
+          }
+
+          (Get-FileHash -Algorithm SHA256 $setup).Hash.ToLowerInvariant() |
+            Set-Content -Encoding ascii "$setup.sha256"
+
+      - name: Validate silent install and uninstall
+        shell: pwsh
+        run: |
+          $setup = Join-Path $PWD "dist\installer\AerolineaCPP-v1.1.0-Setup.exe"
+          $testDir = Join-Path $env:TEMP "AerolineaCPP-Installer-Test"
+
+          if (Test-Path $testDir) {
+            Remove-Item -Recurse -Force $testDir
+          }
+
+          $process = Start-Process -FilePath $setup `
+            -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$testDir") `
+            -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "La instalación silenciosa falló con código $($process.ExitCode)."
+          }
+
+          $installedExe = Join-Path $testDir "AerolineaCPP.exe"
+          $uninstaller = Join-Path $testDir "unins000.exe"
+          if (-not (Test-Path $installedExe) -or -not (Test-Path $uninstaller)) {
+            throw "El instalador no dejó la aplicación o el desinstalador esperados."
+          }
+
+          $uninstallProcess = Start-Process -FilePath $uninstaller `
+            -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') `
+            -Wait -PassThru
+          if ($uninstallProcess.ExitCode -ne 0) {
+            throw "La desinstalación silenciosa falló con código $($uninstallProcess.ExitCode)."
+          }
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AerolineaCPP-v1.1.0-Setup
+          path: |
+            dist/installer/AerolineaCPP-v1.1.0-Setup.exe
+            dist/installer/AerolineaCPP-v1.1.0-Setup.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish installer to v1.1.0 release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.1.0 --repo Jairo0811/Aerolinea | Out-Null
+          gh release upload v1.1.0 `
+            "dist\installer\AerolineaCPP-v1.1.0-Setup.exe" `
+            "dist\installer\AerolineaCPP-v1.1.0-Setup.exe.sha256" `
+            --clobber `
+            --repo Jairo0811/Aerolinea
