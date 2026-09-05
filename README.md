@@ -70,6 +70,7 @@ Para criterios ponderados se utiliza **Dijkstra**. El resultado incluye los tram
 - Recursos visuales embebidos.
 - Ventana **Acerca de** con contexto académico y créditos.
 - Paquete portable para Windows x64 generado por GitHub Actions.
+- Instalador profesional de Windows generado con Inno Setup.
 
 > **Alcance correcto:** AerolineaCPP es una aplicación de **consulta y optimización de rutas**. No ofrece CRUD administrativo de datos desde la GUI y no se presenta como un sistema de reservas u operación real de aerolíneas.
 
@@ -107,7 +108,7 @@ La v1.1.0 incorpora pruebas automatizadas para `RutaManager`:
 
 GitHub Actions ejecuta además un **contrato real contra SQL Server 2022** que levanta `Aerolinea.sql`, lo ejecuta dos veces para comprobar idempotencia y valida tablas, rol mínimo y datos seed.
 
-El pipeline solamente publica una release manual cuando el build, las pruebas unitarias y el contrato de base de datos son satisfactorios.
+La distribución de Windows también recompila la aplicación, ejecuta las pruebas, genera el instalador con Inno Setup y realiza una **instalación/desinstalación silenciosa de validación** antes de publicar el `Setup.exe` en GitHub Releases.
 
 ## Instalación
 
@@ -118,9 +119,26 @@ El pipeline solamente publica una release manual cuando el build, las pruebas un
 - Microsoft ODBC Driver 17 u 18 for SQL Server.
 - TLS correctamente configurado para el servidor de base de datos.
 
+### Instalador recomendado
+
+1. Descarga `AerolineaCPP-v1.1.0-Setup.exe` desde **GitHub Releases**.
+2. Ejecuta el instalador y acepta los permisos de administrador para instalar en `Program Files`.
+3. El asistente registra **AerolineaCPP** en el menú Inicio y permite crear opcionalmente un acceso directo en el escritorio.
+4. Ejecuta `Aerolinea.sql` con permisos para crear/configurar `AerolineaDB`.
+5. Copia `config/database.example.ini` como `config/database.ini` y configura la instancia.
+6. Para autenticación SQL define `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`.
+7. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
+8. Inicia AerolineaCPP desde el menú Inicio o el acceso directo.
+
+El instalador incluye desinstalador y aparece en las aplicaciones instaladas de Windows. La configuración creada manualmente por el usuario no se elimina de forma forzada por el script de instalación.
+
+> **Firma digital:** el instalador de portafolio no está firmado con un certificado Authenticode comercial. Dependiendo de la reputación del archivo, Windows SmartScreen puede mostrar una advertencia antes de ejecutarlo.
+
 ### Paquete portable
 
-1. Descarga la versión más reciente desde **GitHub Releases**.
+Como alternativa al instalador:
+
+1. Descarga `AerolineaCPP-v1.1.0-Windows-x64.zip` desde **GitHub Releases**.
 2. Extrae completamente el ZIP.
 3. Ejecuta `Aerolinea.sql` con permisos para crear/configurar `AerolineaDB`.
 4. Copia `config/database.example.ini` como `config/database.ini`.
@@ -129,7 +147,7 @@ El pipeline solamente publica una release manual cuando el build, las pruebas un
 7. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
 8. Ejecuta `AerolineaCPP.exe`.
 
-Las releases nuevas incluyen un archivo `.sha256` junto al ZIP para verificar integridad.
+Las distribuciones publicadas incluyen archivos `.sha256` para verificar integridad.
 
 ## Arquitectura
 
@@ -173,11 +191,12 @@ Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - ODBC
 - Script SQL idempotente con constraints, índices y rol de solo lectura
 
-### Ingeniería
+### Ingeniería y distribución
 
 - CMake
 - Qt Test
 - CTest
+- Inno Setup
 - Git / GitHub
 - GitHub Actions
 - GitHub Releases
@@ -187,9 +206,13 @@ Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ```text
 Aerolinea/
 ├── .github/workflows/
-│   └── release-windows.yml
+│   ├── release-windows.yml
+│   ├── publish-v1.1.0.yml
+│   └── publish-installer-v1.1.0.yml
 ├── docs/
 │   └── ARCHITECTURE.md
+├── installer/
+│   └── aerolineacpp.iss
 ├── legacy/
 │   └── Proyecto académico restaurado de 2018-C1
 ├── modern-qt-sqlserver/
