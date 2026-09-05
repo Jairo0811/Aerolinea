@@ -14,6 +14,10 @@ Todos los cambios relevantes de AerolineaCPP se documentan aquí.
 - Contrato de integración contra SQL Server 2022 en GitHub Actions.
 - `SECURITY.md` y política de mantenimiento.
 - Licencia de uso de portafolio que respeta la autoría grupal del proyecto original.
+- Instalador profesional `AerolineaCPP-v1.1.0-Setup.exe` generado con Inno Setup.
+- Accesos directos de menú Inicio y escritorio opcional, registro en aplicaciones instaladas y desinstalador.
+- Validación automática de instalación y desinstalación silenciosa antes de publicar el instalador.
+- Checksum SHA-256 independiente para el `Setup.exe`.
 
 ### Changed
 
@@ -22,6 +26,7 @@ Todos los cambios relevantes de AerolineaCPP se documentan aquí.
 - Interfaz y textos actualizados a **Final Portfolio Edition**.
 - README reescrito para describir el alcance real como consulta/optimización y no CRUD.
 - Pipeline de release condicionado a build, unit tests y contrato de base de datos.
+- Distribución Windows disponible tanto como ZIP portable como instalador Inno Setup.
 
 ### Security
 
