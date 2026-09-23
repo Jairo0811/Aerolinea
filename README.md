@@ -5,7 +5,13 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Estado-Portfolio%20Complete-22C55E?style=for-the-badge" alt="Portfolio Complete">
   <img src="https://img.shields.io/badge/Versión-1.1.0-0284C7?style=for-the-badge" alt="v1.1.0">
-  <img src="https://img.shields.io/badge/ITLA-2018--C1-0057B8?style=for-the-badge" alt="ITLA 2018-C1">
+  <img src="https://img.shields.io/badge/ITLA-SOF--012-0057B8?style=for-the-badge" alt="ITLA SOF-012">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Jairo0811/Aerolinea/actions/workflows/release-windows.yml">
+    <img src="https://github.com/Jairo0811/Aerolinea/actions/workflows/release-windows.yml/badge.svg" alt="Windows Release CI/CD" />
+  </a>
 </p>
 
 <p align="center">
@@ -176,22 +182,34 @@ Las distribuciones publicadas incluyen archivos `.sha256` para verificar integri
 
 Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Stack tecnológico
+## 🧱 Stack tecnológico
 
-### Aplicación
+### 🖥️ Aplicación
+
+<p>
+  <img src="https://skillicons.dev/icons?i=cpp,qt,cmake" alt="C++, Qt y CMake" />
+</p>
 
 - C++17
 - Qt 6 Core / Widgets / SQL
 - Programación orientada a objetos
 - Algoritmos de grafos y Dijkstra
 
-### Datos
+### 🗄️ Datos
+
+<p>
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/microsoftsqlserver/microsoftsqlserver-plain.svg" width="48" height="48" alt="Microsoft SQL Server" />
+</p>
 
 - Microsoft SQL Server 2022
 - ODBC
 - Script SQL idempotente con constraints, índices y rol de solo lectura
 
-### Ingeniería y distribución
+### 🧪 Ingeniería y distribución
+
+<p>
+  <img src="https://skillicons.dev/icons?i=git,github,githubactions" alt="Git, GitHub y GitHub Actions" />
+</p>
 
 - CMake
 - Qt Test
@@ -229,7 +247,7 @@ Aerolinea/
 └── README.md
 ```
 
-## Origen académico
+## 🎓 Información académica
 
 | Dato | Información |
 |---|---|
@@ -240,23 +258,25 @@ Aerolinea/
 | Período | 2018-C1 |
 | Modalidad | Proyecto final grupal |
 
-### Integrantes del proyecto original
+### 👥 Equipo académico original
 
-- Francis Jairo Matías Rosario — 2015-2984
-- Jorge de Jesús Torres Pérez — 2016-3515
-- Sebastian Donastor Hernández — 2016-3607
+| 👤 Integrante | 🆔 Matrícula |
+|---|---|
+| 👨🏻‍💻 Francis Jairo Matías Rosario | 2015-2984 |
+| 👨🏻‍💻 Jorge de Jesús Torres Pérez | 2016-3515 |
+| 👨🏻‍💻 Sebastian Donastor Hernández | 2016-3607 |
 
 La modernización de 2026 preserva explícitamente esos créditos y no convierte retroactivamente el trabajo grupal original en una obra individual.
 
-## Continuidad académica
+## 🧭 Continuidad académica
 
-Aerolinea forma parte de una secuencia formativa cursada con el profesor Raydelto Hernández Perera:
+Aerolinea forma parte de una secuencia formativa cursada con el profesor **Raydelto Hernández Perera**. La relación es académica y cronológica; los repositorios no son dependencias técnicas entre sí.
 
-1. **Eventix** — Programación II (SOF-004), 2017-C2.
-2. **Aerolinea** — Estructuras de Datos (SOF-012), 2018-C1.
-3. **ITLA Crush** — Programación WEB (SOF-011), 2018-C2.
-
-La relación es académica y cronológica; los repositorios no son dependencias técnicas entre sí.
+| Orden | Asignatura | Proyecto | Período |
+|---:|---|---|---|
+| 1 | Programación II (SOF-004) | [**Eventix**](https://github.com/Jairo0811/Eventix) | 2017-C2 |
+| 2 | Estructuras de Datos (SOF-012) | **Aerolinea** | 2018-C1 |
+| 3 | Programación WEB (SOF-011) | [**ITLA Crush**](https://github.com/Jairo0811/ITLAcrushReact) | 2018-C2 |
 
 ## Lo que AerolineaCPP no intenta ser
 
