@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="modern-qt-sqlserver/aerolineacpp_logo.png" width="380" alt="AerolineaCPP">
+  <img src="modern-qt-sqlserver/aerolineacpp_logo.png" width="320" alt="AerolineaCPP">
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Estado-Portfolio%20Complete-22C55E?style=for-the-badge" alt="Portfolio Complete">
-  <img src="https://img.shields.io/badge/Versión-1.1.0-0284C7?style=for-the-badge" alt="v1.1.0">
+  <img src="https://img.shields.io/badge/Estado-Portfolio%20Complete%20%2F%20Frozen-22C55E?style=for-the-badge" alt="Portfolio Complete / Frozen">
+  <img src="https://img.shields.io/badge/Versión-1.1.1-0284C7?style=for-the-badge" alt="v1.1.1">
   <img src="https://img.shields.io/badge/ITLA-SOF--012-0057B8?style=for-the-badge" alt="ITLA SOF-012">
 </p>
 
@@ -30,7 +30,7 @@ En 2026 el proyecto fue recuperado sin borrar su historia. El repositorio conser
 - `legacy/`: código académico original restaurado para entornos actuales.
 - `modern-qt-sqlserver/`: **AerolineaCPP**, reinterpretación de escritorio con C++17, Qt 6, SQL Server, CMake, seguridad reforzada, pruebas y CI/CD.
 
-La edición **v1.1.0 — Final Portfolio Edition** cierra la modernización como pieza de portafolio. A partir de esta versión el estado objetivo es **Maintenance**: correcciones, compatibilidad y seguridad, no expansión hacia un sistema comercial de operación aérea.
+La edición **v1.1.0 — Final Portfolio Edition** cerró la modernización como pieza de portafolio y **v1.1.1 — Final Portfolio Maintenance Release** cierra su mantenimiento: configuración correcta para instalaciones en `Program Files`, reconexión, metadatos de Windows, correcciones de Dijkstra y un pipeline de release único y reproducible. El proyecto queda **Portfolio Complete / Frozen**: solo se aceptan correcciones, no expansión hacia un sistema comercial de operación aérea.
 
 ## Qué demuestra este proyecto
 
@@ -50,7 +50,7 @@ SQL Server + ODBC + CMake
 Dijkstra multicriterio + pruebas + CI/CD + hardening
 ```
 
-## AerolineaCPP v1.1.0
+## AerolineaCPP v1.1.1
 
 La aplicación consulta un grafo de rutas almacenado en SQL Server y permite calcular un recorrido óptimo según cuatro criterios:
 
@@ -61,7 +61,7 @@ La aplicación consulta un grafo de rutas almacenado en SQL Server y permite cal
 | **Menor duración** | peso por minutos |
 | **Menor precio** | peso por precio del vuelo |
 
-Para criterios ponderados se utiliza **Dijkstra**. El resultado incluye los tramos, vuelo, aerolínea, aeronave, capacidad, escalas, distancia total, duración total y precio total cuando existe información de precio para todo el recorrido.
+Todos los criterios se resuelven con **Dijkstra** sobre el grafo dirigido de rutas (en *menor precio* cada tramo usa su vuelo más barato y se descartan los tramos sin precio). Los empates se resuelven de forma estable. El resultado incluye los tramos, vuelo, aerolínea, aeronave, capacidad, escalas, distancia total, duración total y precio total cuando existe información de precio para todo el recorrido.
 
 ### Funcionalidades
 
@@ -72,11 +72,20 @@ Para criterios ponderados se utiliza **Dijkstra**. El resultado incluye los tram
 - Cálculo de distancia, duración y precio agregados.
 - Resumen de destinos, rutas, aeronaves y vuelos registrados.
 - Interfaz Qt 6 en tema oscuro y diseño adaptable de escritorio.
-- Configuración externa mediante `database.ini`.
-- Recursos visuales embebidos.
+- Configuración externa mediante `database.ini`, en modo instalado (carpeta del usuario) o portable (junto al ejecutable).
+- **Reintentar conexión** (`F5`) y **Abrir carpeta de configuración** sin reiniciar la aplicación.
+- Recursos visuales embebidos en el ejecutable, con metadatos de versión de Windows.
 - Ventana **Acerca de** con contexto académico y créditos.
 - Paquete portable para Windows x64 generado por GitHub Actions.
 - Instalador profesional de Windows generado con Inno Setup.
+
+## Vista de la aplicación
+
+<p align="center">
+  <img src="docs/screenshots/aerolineacpp-ruta-optima.png" width="820" alt="AerolineaCPP calculando la ruta de menor precio entre Miami y Santo Domingo">
+</p>
+
+<p align="center"><sub>Ruta de menor precio Miami → Santo Domingo con los datos de <code>Aerolinea.sql</code>.</sub></p>
 
 > **Alcance correcto:** AerolineaCPP es una aplicación de **consulta y optimización de rutas**. No ofrece CRUD administrativo de datos desde la GUI y no se presenta como un sistema de reservas u operación real de aerolíneas.
 
@@ -88,7 +97,7 @@ La edición final incorpora límites de confianza explícitos:
 - `trustServerCertificate=false` por defecto;
 - autenticación integrada como opción preferida;
 - usuario y contraseña SQL mediante `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`;
-- `database.ini` excluido del control de versiones;
+- `database.ini` excluido del control de versiones y almacenado fuera de `Program Files` en modo instalado;
 - controlador restringido a Microsoft ODBC Driver 17/18;
 - timeout e intención de lectura;
 - validación de valores procedentes de SQL Server;
@@ -102,19 +111,18 @@ Consulta [SECURITY.md](SECURITY.md) para el modelo de seguridad y reporte de vul
 
 ## Pruebas y CI
 
-La v1.1.0 incorpora pruebas automatizadas para `RutaManager`:
+**20 pruebas** Qt Test/CTest, sin GUI ni SQL Server:
 
-- menos escalas;
-- menor distancia;
-- menor duración;
-- menor precio;
-- destino inalcanzable;
-- origen y destino iguales;
-- búsquedas sin distinguir mayúsculas/minúsculas.
+- `RutaManagerTests` (15): los cuatro criterios, destino inexistente o inalcanzable, origen = destino, mayúsculas/minúsculas, totales de distancia/duración/precio/escalas, vuelo más barato por ruta, tramos sin precio, precios inválidos, ciclos y empates deterministas.
+- `ConfiguracionTests` (5): precedencia portable/usuario, creación de la configuración inicial desde la plantilla, no sobrescritura de un `database.ini` existente y valores predeterminados.
 
-GitHub Actions ejecuta además un **contrato real contra SQL Server 2022** que levanta `Aerolinea.sql`, lo ejecuta dos veces para comprobar idempotencia y valida tablas, rol mínimo y datos seed.
+Un único workflow, [`release-windows.yml`](.github/workflows/release-windows.yml), ejecuta en cada pull request:
 
-La distribución de Windows también recompila la aplicación, ejecuta las pruebas, genera el instalador con Inno Setup y realiza una **instalación/desinstalación silenciosa de validación** antes de publicar el `Setup.exe` en GitHub Releases.
+1. **Contrato real contra SQL Server 2022** (contenedor efímero con contraseña aleatoria por ejecución): `Aerolinea.sql` dos veces para comprobar idempotencia, tablas, claves foráneas, seed y permisos SELECT-only de `AerolineaReader`.
+2. **Build Release + pruebas** en Windows con Qt 6.8.3 / MSVC, verificando los metadatos de versión del `.exe`.
+3. **ZIP portable y `Setup.exe`**, con **instalación silenciosa en `Program Files`**, arranque de la aplicación instalada, creación de la configuración de usuario, **desinstalación silenciosa** y comprobación de que se conserva la configuración personal.
+
+La publicación es manual (`workflow_dispatch` con `vX.Y.Z`): exige que la versión coincida con `CMakeLists.txt`, se ejecuta solo desde `master`, nunca reescribe un tag existente y publica los cuatro assets desde un job separado que es el único con permiso `contents: write`.
 
 ## Instalación
 
@@ -127,16 +135,16 @@ La distribución de Windows también recompila la aplicación, ejecuta las prueb
 
 ### Instalador recomendado
 
-1. Descarga `AerolineaCPP-v1.1.0-Setup.exe` desde **GitHub Releases**.
+1. Descarga `AerolineaCPP-v1.1.1-Setup.exe` desde **GitHub Releases**.
 2. Ejecuta el instalador y acepta los permisos de administrador para instalar en `Program Files`.
 3. El asistente registra **AerolineaCPP** en el menú Inicio y permite crear opcionalmente un acceso directo en el escritorio.
 4. Ejecuta `Aerolinea.sql` con permisos para crear/configurar `AerolineaDB`.
-5. Copia `config/database.example.ini` como `config/database.ini` y configura la instancia.
-6. Para autenticación SQL define `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`.
-7. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
-8. Inicia AerolineaCPP desde el menú Inicio o el acceso directo.
+5. Inicia AerolineaCPP. La primera vez crea tu `database.ini` de usuario a partir de la plantilla.
+6. Menú **Base de datos → Abrir carpeta de configuración**, ajusta servidor y opciones TLS, y pulsa **Reintentar conexión** (`F5`). No hace falta editar `Program Files`.
+7. Para autenticación SQL usa `trustedConnection=false` y define `AEROLINEA_DB_USER` y `AEROLINEA_DB_PASSWORD`.
+8. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
 
-El instalador incluye desinstalador y aparece en las aplicaciones instaladas de Windows. La configuración creada manualmente por el usuario no se elimina de forma forzada por el script de instalación.
+El instalador incluye desinstalador y aparece en las aplicaciones instaladas de Windows. Al desinstalar se eliminan los archivos del programa y **se conserva tu `database.ini` personal**; si quieres borrarlo, elimina la carpeta indicada abajo.
 
 > **Firma digital:** el instalador de portafolio no está firmado con un certificado Authenticode comercial. Dependiendo de la reputación del archivo, Windows SmartScreen puede mostrar una advertencia antes de ejecutarlo.
 
@@ -144,7 +152,7 @@ El instalador incluye desinstalador y aparece en las aplicaciones instaladas de 
 
 Como alternativa al instalador:
 
-1. Descarga `AerolineaCPP-v1.1.0-Windows-x64.zip` desde **GitHub Releases**.
+1. Descarga `AerolineaCPP-v1.1.1-Windows-x64.zip` desde **GitHub Releases**.
 2. Extrae completamente el ZIP.
 3. Ejecuta `Aerolinea.sql` con permisos para crear/configurar `AerolineaDB`.
 4. Copia `config/database.example.ini` como `config/database.ini`.
@@ -153,7 +161,26 @@ Como alternativa al instalador:
 7. Asigna al principal de la aplicación únicamente el rol `AerolineaReader`.
 8. Ejecuta `AerolineaCPP.exe`.
 
-Las distribuciones publicadas incluyen archivos `.sha256` para verificar integridad.
+### Configuración: instalada vs. portable
+
+`database.ini` se busca en este orden:
+
+| Prioridad | Modo | Ubicación |
+|---:|---|---|
+| 1 | Portable | `config\database.ini` junto a `AerolineaCPP.exe`, si existe |
+| 2 | Instalado / usuario | `%LOCALAPPDATA%\JM Software Solutions\AerolineaCPP\database.ini` (`QStandardPaths::AppConfigLocation`), creado una vez desde la plantilla y nunca sobrescrito |
+| 3 | Predeterminado | valores seguros internos (`localhost\SQLEXPRESS`, `AerolineaDB`, TLS, autenticación integrada) |
+
+`database.example.ini` es solo una plantilla: nunca se usa como configuración. El archivo no admite contraseñas; las credenciales SQL vienen siempre de variables de entorno.
+
+### Verificación de integridad
+
+Cada archivo de la release tiene su `.sha256`. En PowerShell:
+
+```powershell
+(Get-FileHash .\AerolineaCPP-v1.1.1-Setup.exe -Algorithm SHA256).Hash.ToLower()
+Get-Content .\AerolineaCPP-v1.1.1-Setup.exe.sha256
+```
 
 ## Arquitectura
 
@@ -224,20 +251,21 @@ Más detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ```text
 Aerolinea/
 ├── .github/workflows/
-│   ├── release-windows.yml
-│   ├── publish-v1.1.0.yml
-│   └── publish-installer-v1.1.0.yml
+│   └── release-windows.yml      # CI + release genérica
 ├── docs/
-│   └── ARCHITECTURE.md
+│   ├── ARCHITECTURE.md
+│   └── screenshots/
 ├── installer/
 │   └── aerolineacpp.iss
 ├── legacy/
 │   └── Proyecto académico restaurado de 2018-C1
 ├── modern-qt-sqlserver/
 │   ├── tests/
-│   │   └── rutamanager_tests.cpp
+│   │   ├── rutamanager_tests.cpp
+│   │   └── configuracion_tests.cpp
 │   ├── config/
-│   │   └── database.example.ini
+│   │   └── database.example.ini   # plantilla embebida
+│   ├── app_icon.rc.in             # icono + metadatos de versión de Windows
 │   ├── Aerolinea.sql
 │   ├── CMakeLists.txt
 │   └── Código fuente Qt/C++
@@ -296,19 +324,19 @@ Ese límite es intencional. El valor del proyecto está en **estructuras de dato
 
 ## Estado del proyecto
 
-### Portfolio Complete / Maintenance
+### Portfolio Complete / Frozen
 
-La v1.1.0 constituye el cierre funcional previsto.
+La v1.1.0 fue el cierre funcional y la **v1.1.1** la versión final de mantenimiento. El proyecto queda congelado.
 
-Se aceptan como evolución futura:
+Solo se aceptan:
 
-- correcciones de bugs;
-- actualizaciones de dependencias;
-- hardening adicional;
-- compatibilidad con nuevas versiones de Qt, CMake, ODBC o SQL Server;
-- mejoras menores de accesibilidad y UX.
+- vulnerabilidades reales;
+- bugs reales;
+- incompatibilidades futuras con Windows, Qt, CMake, ODBC o SQL Server;
+- actualizaciones obligatorias de dependencias;
+- errores documentales importantes.
 
-Nuevos módulos empresariales quedan fuera del alcance de este repositorio.
+No se aceptan nuevas funcionalidades, módulos, rediseños periódicos ni expansión comercial.
 
 ## Licencia y uso
 
