@@ -34,6 +34,7 @@ set_source_files_properties(
     PROPERTIES QT_RESOURCE_ALIAS "itla.png"
 )
 
+# Recursos embebidos: única fuente de verdad para logos, icono y plantilla.
 qt_add_resources(AerolineaCPP "branding_resources"
     PREFIX "/branding"
     FILES
@@ -50,23 +51,6 @@ qt_add_resources(AerolineaCPP "config_resources"
 if(WIN32)
     target_sources(AerolineaCPP PRIVATE app_icon.rc)
 endif()
-
-add_custom_command(TARGET AerolineaCPP POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:AerolineaCPP>/config"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/config/database.example.ini"
-            "$<TARGET_FILE_DIR:AerolineaCPP>/config/database.example.ini"
-    COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:AerolineaCPP>/branding"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/aerolineacpp_logo.png"
-            "$<TARGET_FILE_DIR:AerolineaCPP>/branding/aerolineacpp_logo.png"
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/itla_logo.png"
-            "$<TARGET_FILE_DIR:AerolineaCPP>/branding/itla_logo.png"
-    COMMENT "Copiando configuración y recursos de branding"
-)
 
 target_link_libraries(AerolineaCPP PRIVATE Qt::Core Qt::Widgets Qt::Sql)
 
