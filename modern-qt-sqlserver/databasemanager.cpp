@@ -2,8 +2,6 @@
 
 #include <QCoreApplication>
 #include <QDebug>
-#include <QDir>
-#include <QFileInfo>
 #include <QRegularExpression>
 #include <QSettings>
 #include <QSqlError>
@@ -17,6 +15,7 @@ constexpr auto CONNECTION_NAME = "conexion_aerolinea";
 constexpr auto DEFAULT_DRIVER = "ODBC Driver 17 for SQL Server";
 constexpr auto DEFAULT_SERVER = "localhost\\SQLEXPRESS";
 constexpr auto DEFAULT_DATABASE = "AerolineaDB";
+constexpr auto TEMPLATE_RESOURCE = ":/config/database.example.ini";
 QString quoteOdbcValue(QString value)
 {
     value.replace("}", "}}");
@@ -26,26 +25,16 @@ QString quoteOdbcValue(QString value)
 
 DatabaseManager::DatabaseManager() = default;
 
-QString DatabaseManager::obtenerRutaConfiguracion() const
+const ConfiguracionResuelta& DatabaseManager::configuracionActiva() const
 {
-    const QString applicationDirectory = QCoreApplication::applicationDirPath();
-    const QStringList candidates = {
-        QDir(applicationDirectory).filePath("config/database.ini"),
-        QDir(applicationDirectory).filePath("config/database.example.ini")
-    };
-
-    for (const QString& candidate : candidates) {
-        if (QFileInfo::exists(candidate)) {
-            return candidate;
-        }
-    }
-
-    return {};
+    return configuracion;
 }
 
-QString DatabaseManager::construirCadenaConexion() const
+QString DatabaseManager::construirCadenaConexion()
 {
-    const QString configurationPath = obtenerRutaConfiguracion();
+    configuracion = ConfiguracionBaseDatos::resolver(
+        QCoreApplication::applicationDirPath(), TEMPLATE_RESOURCE);
+    const QString configurationPath = configuracion.ruta;
 
     QString driver = DEFAULT_DRIVER;
     QString server = DEFAULT_SERVER;
@@ -122,7 +111,9 @@ QString DatabaseManager::construirCadenaConexion() const
 bool DatabaseManager::conectar()
 {
     if (QSqlDatabase::contains(CONNECTION_NAME)) {
-        db = QSqlDatabase::database(CONNECTION_NAME);
+        // open=false: no reintentar con una cadena de conexión anterior antes
+        // de leer la configuración vigente.
+        db = QSqlDatabase::database(CONNECTION_NAME, false);
     } else {
         db = QSqlDatabase::addDatabase("QODBC", CONNECTION_NAME);
     }
@@ -144,6 +135,17 @@ bool DatabaseManager::conectar()
     }
 
     return true;
+}
+
+bool DatabaseManager::reconectar()
+{
+    if (QSqlDatabase::contains(CONNECTION_NAME)) {
+        QSqlDatabase existente = QSqlDatabase::database(CONNECTION_NAME, false);
+        existente.close();
+    }
+    db = QSqlDatabase();
+
+    return conectar();
 }
 
 QStringList DatabaseManager::obtenerDestinos()
@@ -337,48 +339,6 @@ int DatabaseManager::contarVuelos()
     return query.exec("SELECT COUNT(*) FROM Vuelos") && query.next()
         ? query.value(0).toInt()
         : 0;
-}
-
-Vuelo DatabaseManager::obtenerVueloPorRutaId(int rutaId)
-{
-    if (rutaId <= 0) {
-        return {};
-    }
-
-    if (!db.isOpen() && !conectar()) {
-        return {};
-    }
-
-    QSqlQuery query(db);
-    query.prepare(
-        "SELECT Id, RutaId, AeronaveId, CodigoVuelo, Aerolinea, Precio "
-        "FROM Vuelos WHERE RutaId = ?"
-    );
-    query.addBindValue(rutaId);
-
-    if (!query.exec()) {
-        qWarning() << "Error consultando vuelo por ruta:" << query.lastError().text();
-        return {};
-    }
-
-    if (!query.next()) {
-        return {};
-    }
-
-    const int id = query.value("Id").toInt();
-    const int storedRutaId = query.value("RutaId").toInt();
-    const int aeronaveId = query.value("AeronaveId").toInt();
-    const QString codigo = query.value("CodigoVuelo").toString().trimmed();
-    const QString aerolinea = query.value("Aerolinea").toString().trimmed();
-    const double precio = query.value("Precio").toDouble();
-    if (id <= 0 || storedRutaId != rutaId || aeronaveId <= 0 ||
-        !textoSeguro(codigo, 20) || !textoSeguro(aerolinea, 100) ||
-        !std::isfinite(precio) || precio < 0.0 || precio > 1000000.0) {
-        qWarning() << "SQL Server devolvió un vuelo fuera de los límites permitidos.";
-        return {};
-    }
-
-    return Vuelo(id, storedRutaId, aeronaveId, codigo, aerolinea, precio);
 }
 
 bool DatabaseManager::textoSeguro(const QString& value,

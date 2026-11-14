@@ -1,6 +1,7 @@
 #ifndef RUTAMANAGER_H
 #define RUTAMANAGER_H
 
+#include <QHash>
 #include <QString>
 #include <QStringList>
 #include <QVector>
@@ -45,6 +46,8 @@ private:
     QVector<Ruta> rutas;
     QVector<Vuelo> vuelos;
     QVector<Aeronave> aeronaves;
+    // Vuelo con menor precio por RutaId (empate: menor Id de vuelo).
+    QHash<int, Vuelo> mejorVueloPorRuta;
 
     bool existeDestino(const QString& nombre) const;
     QVector<Ruta> obtenerRutasDesde(const QString& origen) const;

@@ -1,29 +1,51 @@
 name: Build, Test and Release AerolineaCPP
 
+# Pipeline único y genérico de AerolineaCPP.
+#
+# Pull request / push a master:
+#   contrato SQL Server + build Release + unit tests + ZIP portable +
+#   Setup.exe + instalación/desinstalación silenciosa de validación.
+#   No publica nada.
+#
+# Ejecución manual (workflow_dispatch) desde master con version=vX.Y.Z:
+#   lo mismo y, solo si todo pasa, publica una GitHub Release nueva con:
+#     AerolineaCPP-vX.Y.Z-Windows-x64.zip (+ .sha256)
+#     AerolineaCPP-vX.Y.Z-Setup.exe       (+ .sha256)
+#   La versión debe coincidir con project(AerolineaCPP VERSION ...) y la
+#   release no puede existir previamente: los tags históricos no se mueven.
+
 on:
   pull_request:
     paths:
       - ".github/workflows/release-windows.yml"
       - "modern-qt-sqlserver/**"
+      - "installer/**"
+      - "LICENSE"
   push:
     branches:
       - master
     paths:
       - ".github/workflows/release-windows.yml"
       - "modern-qt-sqlserver/**"
+      - "installer/**"
+      - "LICENSE"
   workflow_dispatch:
     inputs:
       version:
-        description: "Version tag to publish (for example, v1.1.0)"
+        description: "Tag SemVer a publicar; debe coincidir con CMakeLists.txt (por ejemplo, v1.1.1)"
         required: true
+        type: string
+      release_title:
+        description: "Título opcional de la release (por defecto: AerolineaCPP <version>)"
+        required: false
         type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: aerolinea-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: aerolinea-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
   database-contract:
@@ -32,42 +54,42 @@ jobs:
     permissions:
       contents: read
 
-    services:
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2022-latest
-        env:
-          ACCEPT_EULA: "Y"
-          MSSQL_SA_PASSWORD: "AerolineaCI_2026!Secure"
-        ports:
-          - 1433:1433
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
+      - name: Start ephemeral SQL Server 2022
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Contraseña aleatoria por ejecución: solo existe dentro de este
+          # contenedor efímero de CI, no está en el repositorio y no requiere
+          # secretos (funciona igual en pull requests desde forks).
+          SA_PASSWORD="Ci1!$(openssl rand -hex 16)"
+          echo "::add-mask::$SA_PASSWORD"
+          echo "SA_PASSWORD=$SA_PASSWORD" >> "$GITHUB_ENV"
+
+          docker run --detach --name aerolinea-sql \
+            --env ACCEPT_EULA=Y \
+            --env MSSQL_SA_PASSWORD="$SA_PASSWORD" \
+            mcr.microsoft.com/mssql/server:2022-latest >/dev/null
+
       - name: Validate idempotent database bootstrap
         shell: bash
-        env:
-          SQLSERVER_ID: ${{ job.services.sqlserver.id }}
-          SA_PASSWORD: "AerolineaCI_2026!Secure"
         run: |
           set -euo pipefail
 
-          SQLCMD="$(docker exec "$SQLSERVER_ID" sh -lc '
-            if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then
-              printf /opt/mssql-tools18/bin/sqlcmd
-            elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then
-              printf /opt/mssql-tools/bin/sqlcmd
-            else
-              exit 1
-            fi
-          ')"
-
           ready=0
           for _ in $(seq 1 60); do
-            if docker exec "$SQLSERVER_ID" "$SQLCMD" \
+            SQLCMD="$(docker exec aerolinea-sql sh -c '
+              for candidate in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
+                [ -x "$candidate" ] && { printf %s "$candidate"; exit 0; }
+              done
+              exit 1
+            ' 2>/dev/null || true)"
+            if [ -n "$SQLCMD" ] && docker exec aerolinea-sql "$SQLCMD" \
               -S localhost -U sa -P "$SA_PASSWORD" -C -Q "SELECT 1" \
               >/dev/null 2>&1; then
               ready=1
@@ -78,21 +100,22 @@ jobs:
 
           if [ "$ready" -ne 1 ]; then
             echo "SQL Server no quedó disponible para las pruebas."
+            docker logs aerolinea-sql | tail -50
             exit 1
           fi
 
-          docker cp modern-qt-sqlserver/Aerolinea.sql \
-            "${SQLSERVER_ID}:/tmp/Aerolinea.sql"
+          docker cp modern-qt-sqlserver/Aerolinea.sql aerolinea-sql:/tmp/Aerolinea.sql
 
           # Debe funcionar desde cero y también al ejecutarse por segunda vez.
-          docker exec "$SQLSERVER_ID" "$SQLCMD" \
-            -S localhost -U sa -P "$SA_PASSWORD" -C -b \
-            -i /tmp/Aerolinea.sql
-          docker exec "$SQLSERVER_ID" "$SQLCMD" \
-            -S localhost -U sa -P "$SA_PASSWORD" -C -b \
-            -i /tmp/Aerolinea.sql
+          for run in 1 2; do
+            echo "Ejecución $run de Aerolinea.sql"
+            docker exec aerolinea-sql "$SQLCMD" \
+              -S localhost -U sa -P "$SA_PASSWORD" -C -b \
+              -i /tmp/Aerolinea.sql
+          done
 
           CONTRACT="
+          SET NOCOUNT ON;
           USE AerolineaDB;
           IF OBJECT_ID(N'dbo.Destinos', N'U') IS NULL RAISERROR('Falta Destinos', 16, 1);
           IF OBJECT_ID(N'dbo.Rutas', N'U') IS NULL RAISERROR('Falta Rutas', 16, 1);
@@ -103,19 +126,39 @@ jobs:
           IF (SELECT COUNT(*) FROM dbo.Rutas) <> 7 RAISERROR('Seed Rutas inesperado', 16, 1);
           IF (SELECT COUNT(*) FROM dbo.Aeronaves) <> 3 RAISERROR('Seed Aeronaves inesperado', 16, 1);
           IF (SELECT COUNT(*) FROM dbo.Vuelos) <> 6 RAISERROR('Seed Vuelos inesperado', 16, 1);
+          IF (SELECT COUNT(*) FROM sys.foreign_keys WHERE parent_object_id IN
+                (OBJECT_ID(N'dbo.Rutas'), OBJECT_ID(N'dbo.Vuelos'))) <> 4
+              RAISERROR('Claves foráneas inesperadas', 16, 1);
+          IF EXISTS (
+              SELECT 1 FROM sys.database_permissions p
+              WHERE p.grantee_principal_id = DATABASE_PRINCIPAL_ID(N'AerolineaReader')
+                AND p.state IN ('G', 'W')
+                AND p.permission_name <> N'SELECT')
+              RAISERROR('AerolineaReader tiene permisos distintos de SELECT', 16, 1);
+          IF (SELECT COUNT(*) FROM sys.database_permissions p
+              WHERE p.grantee_principal_id = DATABASE_PRINCIPAL_ID(N'AerolineaReader')
+                AND p.state = 'G' AND p.permission_name = N'SELECT') <> 4
+              RAISERROR('AerolineaReader debe tener SELECT sobre las 4 tablas', 16, 1);
+          PRINT 'Contrato de base de datos verificado.';
           "
 
-          docker exec "$SQLSERVER_ID" "$SQLCMD" \
+          docker exec aerolinea-sql "$SQLCMD" \
             -S localhost -U sa -P "$SA_PASSWORD" -C -b -Q "$CONTRACT"
 
+      - name: Stop SQL Server
+        if: always()
+        shell: bash
+        run: docker rm --force aerolinea-sql >/dev/null 2>&1 || true
+
   build-windows:
-    name: Windows build and unit tests
+    name: Windows build, tests, portable and installer
     runs-on: windows-2022
     permissions:
       contents: read
     outputs:
       version: ${{ steps.metadata.outputs.version }}
       package_name: ${{ steps.metadata.outputs.package_name }}
+      setup_name: ${{ steps.metadata.outputs.setup_name }}
 
     steps:
       - name: Checkout
@@ -123,25 +166,33 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: "6.8.3"
-          arch: "win64_msvc2022_64"
-          cache: true
-
-      - name: Resolve and validate package metadata
+      - name: Resolve and validate version
         id: metadata
         shell: pwsh
         env:
           RELEASE_INPUT: ${{ inputs.version }}
           EVENT_NAME: ${{ github.event_name }}
+          GIT_REF: ${{ github.ref }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
+          $cmake = Get-Content -Raw "modern-qt-sqlserver\CMakeLists.txt"
+          $match = [regex]::Match($cmake,
+            '(?s)project\s*\(\s*AerolineaCPP\b.*?\bVERSION\s+([0-9]+\.[0-9]+\.[0-9]+)\b')
+          if (-not $match.Success) {
+            throw "No se pudo leer la versión de project(AerolineaCPP VERSION ...)."
+          }
+          $cmakeVersion = $match.Groups[1].Value
+
           if ($env:EVENT_NAME -eq "workflow_dispatch") {
-            $version = $env:RELEASE_INPUT
-            if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$') {
-              throw "La versión debe tener formato SemVer, por ejemplo v1.1.0."
+            if ($env:GIT_REF -ne "refs/heads/master") {
+              throw "Las releases solo se publican desde master (ref actual: $env:GIT_REF)."
+            }
+            $version = $env:RELEASE_INPUT.Trim()
+            if ($version -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
+              throw "La versión debe tener formato SemVer vX.Y.Z (recibido: '$version')."
+            }
+            if ($version.Substring(1) -ne $cmakeVersion) {
+              throw "La versión '$version' no coincide con CMakeLists.txt ($cmakeVersion)."
             }
           }
           else {
@@ -149,10 +200,23 @@ jobs:
           }
 
           $packageName = "AerolineaCPP-$version-Windows-x64"
+          $setupName = "AerolineaCPP-$version-Setup"
+          Write-Host "CMake: $cmakeVersion · paquete: $packageName"
+
+          "CMAKE_VERSION=$cmakeVersion" >> $env:GITHUB_ENV
           "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
           "PACKAGE_NAME=$packageName" >> $env:GITHUB_ENV
+          "SETUP_NAME=$setupName" >> $env:GITHUB_ENV
           "version=$version" >> $env:GITHUB_OUTPUT
           "package_name=$packageName" >> $env:GITHUB_OUTPUT
+          "setup_name=$setupName" >> $env:GITHUB_OUTPUT
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: "win64_msvc2022_64"
+          cache: true
 
       - name: Configure
         shell: pwsh
@@ -166,23 +230,48 @@ jobs:
         shell: pwsh
         run: ctest --test-dir build -C Release --output-on-failure
 
+      - name: Verify executable metadata
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
+            Where-Object { $_.FullName -match '\\Release\\' } |
+            Select-Object -First 1
+          if (-not $exe) {
+            throw "No se encontró AerolineaCPP.exe en la compilación Release."
+          }
+          "AEROLINEA_EXE=$($exe.FullName)" >> $env:GITHUB_ENV
+
+          $info = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe.FullName)
+          $info | Format-List FileDescription, FileVersion, ProductName,
+            ProductVersion, OriginalFilename, InternalName, CompanyName,
+            LegalCopyright, Comments
+
+          if ($info.ProductVersion -ne $env:CMAKE_VERSION) {
+            throw "ProductVersion '$($info.ProductVersion)' no coincide con CMake '$env:CMAKE_VERSION'."
+          }
+          if ($info.FileVersion -ne "$env:CMAKE_VERSION.0") {
+            throw "FileVersion '$($info.FileVersion)' no coincide con CMake '$env:CMAKE_VERSION'."
+          }
+          foreach ($field in 'FileDescription', 'ProductName', 'OriginalFilename',
+                             'InternalName', 'CompanyName', 'LegalCopyright') {
+            if ([string]::IsNullOrWhiteSpace($info.$field)) {
+              throw "Falta el metadato $field en AerolineaCPP.exe."
+            }
+          }
+          if ($info.OriginalFilename -ne "AerolineaCPP.exe") {
+            throw "OriginalFilename inesperado: $($info.OriginalFilename)."
+          }
+
       - name: Prepare portable package
         shell: pwsh
         run: |
           $packageDir = Join-Path $PWD "dist\$env:PACKAGE_NAME"
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-          $exe = Get-ChildItem -Path build -Filter AerolineaCPP.exe -Recurse |
-            Where-Object { $_.FullName -match '\\Release\\' } |
-            Select-Object -First 1
-
-          if (-not $exe) {
-            throw "No se encontró AerolineaCPP.exe en la compilación Release."
-          }
-
-          Copy-Item $exe.FullName (Join-Path $packageDir "AerolineaCPP.exe")
+          Copy-Item $env:AEROLINEA_EXE (Join-Path $packageDir "AerolineaCPP.exe")
           windeployqt --release --compiler-runtime --no-translations `
             (Join-Path $packageDir "AerolineaCPP.exe")
+          if ($LASTEXITCODE -ne 0) { throw "windeployqt terminó con código $LASTEXITCODE." }
 
           New-Item -ItemType Directory -Force `
             -Path (Join-Path $packageDir "config") | Out-Null
@@ -191,40 +280,216 @@ jobs:
           Copy-Item "modern-qt-sqlserver\Aerolinea.sql" `
             (Join-Path $packageDir "Aerolinea.sql")
 
-          $readmeLines = @(
+          # UTF-8 con BOM: legible en el Bloc de notas y en el asistente de Inno Setup.
+          Get-Content -Raw -Encoding utf8 "LICENSE" |
+            Set-Content -NoNewline -Encoding utf8BOM (Join-Path $packageDir "LICENSE.txt")
+
+          @(
             "AerolineaCPP $env:RELEASE_VERSION",
-            "=====================",
+            "==============================",
             "",
-            "Final Portfolio Edition",
+            "Proyecto académico ITLA (Estructuras de Datos, SOF-012, 2018-C1)",
+            "modernizado en 2026: consulta y optimización de rutas aéreas con",
+            "C++17, Qt 6, Dijkstra y Microsoft SQL Server.",
+            "No es un sistema real de reservas ni de operación aérea.",
             "",
             "REQUISITOS",
-            "- Windows 10/11 x64",
-            "- Microsoft ODBC Driver 17 o 18 for SQL Server",
-            "- Microsoft SQL Server con TLS configurado",
+            "- Windows 10/11 x64.",
+            "- Microsoft ODBC Driver 17 u 18 for SQL Server.",
+            "- Microsoft SQL Server con TLS configurado.",
             "",
-            "INSTALACIÓN",
-            "1. Ejecuta Aerolinea.sql en SQL Server.",
-            "2. Copia config\database.example.ini como config\database.ini.",
-            "3. Configura la instancia; no guardes contraseñas en el archivo.",
-            "4. Para autenticación SQL, define AEROLINEA_DB_USER y AEROLINEA_DB_PASSWORD.",
-            "5. Asigna al usuario únicamente el rol AerolineaReader.",
-            "6. Ejecuta AerolineaCPP.exe."
-          )
-          $readmeLines | Set-Content -Encoding UTF8 `
-            (Join-Path $packageDir "LEEME.txt")
+            "BASE DE DATOS",
+            "1. Ejecuta Aerolinea.sql en SQL Server (crea AerolineaDB y el rol AerolineaReader).",
+            "2. Asigna al usuario de la aplicación únicamente el rol AerolineaReader.",
+            "",
+            "CONFIGURACIÓN",
+            "Orden de búsqueda de database.ini:",
+            "  1. Portable: config\database.ini junto a AerolineaCPP.exe (si existe).",
+            "  2. Usuario:  %LOCALAPPDATA%\JM Software Solutions\AerolineaCPP\database.ini",
+            "     Se crea automáticamente a partir de la plantilla la primera vez y",
+            "     nunca se sobrescribe.",
+            "  3. Valores seguros predeterminados.",
+            "",
+            "Instalado (Setup.exe): edita la configuración de usuario desde el menú",
+            "  Base de datos -> Abrir carpeta de configuración; no hace falta tocar",
+            "  Program Files ni tener permisos de administrador.",
+            "Portable (ZIP): copia config\database.example.ini como config\database.ini.",
+            "",
+            "Después de editar, usa Base de datos -> Reintentar conexión (F5).",
+            "",
+            "SEGURIDAD",
+            "- No guardes contraseñas en database.ini.",
+            "- Para autenticación SQL usa trustedConnection=false y las variables de",
+            "  entorno AEROLINEA_DB_USER y AEROLINEA_DB_PASSWORD.",
+            "- TLS es obligatorio (encrypt=true); mantén trustServerCertificate=false.",
+            "",
+            "DESINSTALACIÓN",
+            "El desinstalador elimina los archivos del programa y conserva tu",
+            "database.ini personal.",
+            "",
+            "Firma digital: los binarios no tienen firma Authenticode comercial;",
+            "Windows SmartScreen puede mostrar una advertencia. Verifica el",
+            "SHA-256 publicado junto a cada archivo de la release.",
+            "",
+            "Repositorio: https://github.com/Jairo0811/Aerolinea"
+          ) | Set-Content -Encoding utf8BOM (Join-Path $packageDir "LEEME.txt")
 
           $zipPath = "dist\$env:PACKAGE_NAME.zip"
           Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
           (Get-FileHash -Algorithm SHA256 $zipPath).Hash.ToLowerInvariant() |
-            Set-Content -Encoding ascii "$zipPath.sha256"
+            Set-Content -NoNewline -Encoding ascii "$zipPath.sha256"
 
-      - name: Upload package artifact
+          Get-ChildItem -Recurse $packageDir |
+            Where-Object { -not $_.PSIsContainer } |
+            ForEach-Object { $_.FullName.Substring($packageDir.Length + 1) } |
+            Sort-Object
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw "No se pudo instalar Inno Setup." }
+          }
+          if (-not (Test-Path $iscc)) { throw "No se encontró ISCC.exe de Inno Setup." }
+          "ISCC=$iscc" >> $env:GITHUB_ENV
+
+      - name: Compile installer
+        shell: pwsh
+        run: |
+          $sourceDir = Join-Path $PWD "dist\$env:PACKAGE_NAME"
+          $outputDir = Join-Path $PWD "dist\installer"
+          New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
+
+          & $env:ISCC "/DMyAppVersion=$env:CMAKE_VERSION" `
+            "/DMyAppVersionTag=$env:RELEASE_VERSION" `
+            "/DSourceDir=$sourceDir" "/DOutputDir=$outputDir" `
+            "installer\aerolineacpp.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup terminó con código $LASTEXITCODE."
+          }
+
+          $setup = Join-Path $outputDir "$env:SETUP_NAME.exe"
+          if (-not (Test-Path $setup)) {
+            throw "No se generó $env:SETUP_NAME.exe."
+          }
+          (Get-FileHash -Algorithm SHA256 $setup).Hash.ToLowerInvariant() |
+            Set-Content -NoNewline -Encoding ascii "$setup.sha256"
+
+      - name: Validate silent install, installed-mode configuration and uninstall
+        shell: pwsh
+        run: |
+          $setup = Join-Path $PWD "dist\installer\$env:SETUP_NAME.exe"
+          $appDir = Join-Path $env:ProgramFiles "AerolineaCPP"
+          $userConfig = Join-Path $env:LOCALAPPDATA "JM Software Solutions\AerolineaCPP\database.ini"
+          $screenshotDir = Join-Path $PWD "dist\screenshots"
+          New-Item -ItemType Directory -Force -Path $screenshotDir | Out-Null
+
+          if (Test-Path $userConfig) { Remove-Item -Force $userConfig }
+
+          # 1. Instalación silenciosa en Program Files (ruta por defecto).
+          $install = Start-Process -FilePath $setup `
+            -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/LOG=$PWD\dist\install.log") `
+            -Wait -PassThru
+          if ($install.ExitCode -ne 0) {
+            throw "La instalación silenciosa falló con código $($install.ExitCode)."
+          }
+
+          $installedExe = Join-Path $appDir "AerolineaCPP.exe"
+          $uninstaller = Join-Path $appDir "unins000.exe"
+          foreach ($expected in $installedExe, $uninstaller,
+                                (Join-Path $appDir "LEEME.txt"),
+                                (Join-Path $appDir "LICENSE.txt")) {
+            if (-not (Test-Path $expected)) { throw "Falta tras instalar: $expected" }
+          }
+          Write-Host "OK: AerolineaCPP.exe y unins000.exe instalados en $appDir"
+
+          # 2. Modo instalado: la app crea su database.ini de usuario fuera de
+          #    Program Files. Sin SQL Server mostrará el estado SIN CONEXIÓN.
+          $app = Start-Process -FilePath $installedExe -PassThru
+          $deadline = (Get-Date).AddSeconds(30)
+          while (-not (Test-Path $userConfig) -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 500
+          }
+          Start-Sleep -Seconds 12
+
+          try {
+            Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+            $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+            $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+            $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+            $bitmap.Save((Join-Path $screenshotDir "installed-app.png"), [System.Drawing.Imaging.ImageFormat]::Png)
+            $graphics.Dispose(); $bitmap.Dispose()
+          }
+          catch {
+            Write-Warning "No se pudo capturar la pantalla: $_"
+          }
+
+          $alive = -not $app.HasExited
+          if ($alive) { Stop-Process -Id $app.Id -Force }
+          if (-not $alive) { throw "AerolineaCPP.exe terminó inesperadamente (código $($app.ExitCode))." }
+          if (-not (Test-Path $userConfig)) {
+            throw "La app instalada no creó la configuración de usuario en $userConfig."
+          }
+          if (Test-Path (Join-Path $appDir "config\database.ini")) {
+            throw "La app instalada escribió database.ini dentro de Program Files."
+          }
+          if ((Get-Content -Raw $userConfig) -notmatch '\[database\]') {
+            throw "La configuración de usuario no proviene de la plantilla."
+          }
+          Write-Host "OK: configuración de usuario creada en $userConfig"
+
+          # El usuario personaliza su configuración; debe sobrevivir a la desinstalación.
+          Add-Content -Path $userConfig -Value "; personalizado-por-ci"
+
+          # 3. Desinstalación silenciosa.
+          $uninstall = Start-Process -FilePath $uninstaller `
+            -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') `
+            -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) {
+            throw "La desinstalación silenciosa falló con código $($uninstall.ExitCode)."
+          }
+          # unins000.exe se relanza desde %TEMP% y termina de borrar en segundo plano.
+          $deadline = (Get-Date).AddSeconds(30)
+          while (((Test-Path $installedExe) -or (Test-Path $uninstaller)) -and (Get-Date) -lt $deadline) {
+            Start-Sleep -Milliseconds 500
+          }
+          if ((Test-Path $installedExe) -or (Test-Path $uninstaller)) {
+            throw "La desinstalación dejó binarios en $appDir."
+          }
+          $leftovers = @(Get-ChildItem -Recurse -File $appDir -ErrorAction SilentlyContinue)
+          if ($leftovers.Count -gt 0) {
+            $leftovers | ForEach-Object { Write-Host "Restante: $($_.FullName)" }
+            throw "La desinstalación dejó archivos del programa."
+          }
+          Write-Host "OK: archivos del programa eliminados"
+
+          if (-not (Test-Path $userConfig) -or
+              (Get-Content -Raw $userConfig) -notmatch 'personalizado-por-ci') {
+            throw "La desinstalación eliminó o alteró la configuración personal del usuario."
+          }
+          Write-Host "OK: database.ini personal conservado tras desinstalar"
+
+      - name: Upload validation screenshot
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.metadata.outputs.package_name }}
+          name: screenshots-${{ steps.metadata.outputs.version }}
+          path: dist/screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.metadata.outputs.version }}
           path: |
             dist/${{ steps.metadata.outputs.package_name }}.zip
             dist/${{ steps.metadata.outputs.package_name }}.zip.sha256
+            dist/installer/${{ steps.metadata.outputs.setup_name }}.exe
+            dist/installer/${{ steps.metadata.outputs.setup_name }}.exe.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -234,62 +499,82 @@ jobs:
     needs:
       - build-windows
       - database-contract
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
+    # Único job con permiso de escritura; no compila ni ejecuta código del proyecto.
     permissions:
       contents: write
 
     steps:
-      - name: Download verified build artifact
+      - name: Checkout (release notes)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
+      - name: Download verified artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ${{ needs.build-windows.outputs.package_name }}
-          path: dist
+          name: release-${{ needs.build-windows.outputs.version }}
+          path: assets
 
       - name: Publish GitHub Release
-        shell: pwsh
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_VERSION: ${{ needs.build-windows.outputs.version }}
           PACKAGE_NAME: ${{ needs.build-windows.outputs.package_name }}
+          SETUP_NAME: ${{ needs.build-windows.outputs.setup_name }}
+          RELEASE_TITLE: ${{ inputs.release_title }}
           TARGET_SHA: ${{ github.sha }}
         run: |
-          $zipPath = Join-Path $PWD "dist\$env:PACKAGE_NAME.zip"
-          $hashPath = "$zipPath.sha256"
-          if (-not (Test-Path $zipPath) -or -not (Test-Path $hashPath)) {
-            throw "El artefacto o su checksum no están disponibles."
-          }
+          set -euo pipefail
 
-          $notesFile = Join-Path $PWD "release-notes.md"
-          $checksum = (Get-Content $hashPath -Raw).Trim()
-          $notes = @(
-            "## AerolineaCPP $env:RELEASE_VERSION — Final Portfolio Edition",
-            "",
-            "Cierre profesional de la modernización del proyecto académico de Estructuras de Datos (ITLA, 2018-C1).",
-            "",
-            "### Destacado",
-            "",
-            "- Optimización de rutas por menos escalas, menor distancia, menor duración o menor precio.",
-            "- Motor basado en Dijkstra para criterios ponderados.",
-            "- Pruebas unitarias automatizadas de RutaManager.",
-            "- Contrato de SQL Server validado desde cero y de forma idempotente en CI.",
-            "- Conexión SQL cifrada y credenciales fuera del archivo INI.",
-            "- Rol de mínimo privilegio AerolineaReader.",
-            "",
-            "**Estado:** Portfolio Complete / Maintenance.",
-            "",
-            ('SHA-256: `{0}`' -f $checksum)
+          # Los artefactos se aplanan al descargarse.
+          files=(
+            "assets/$PACKAGE_NAME.zip"
+            "assets/$PACKAGE_NAME.zip.sha256"
+            "assets/$SETUP_NAME.exe"
+            "assets/$SETUP_NAME.exe.sha256"
           )
-          $notes | Set-Content -Encoding UTF8 $notesFile
+          for file in "${files[@]}"; do
+            [ -f "$file" ] || { echo "Falta $file"; exit 1; }
+          done
+          for binary in "assets/$PACKAGE_NAME.zip" "assets/$SETUP_NAME.exe"; do
+            expected="$(tr -d '[:space:]' < "$binary.sha256")"
+            actual="$(sha256sum "$binary" | cut -d' ' -f1)"
+            [ "$expected" = "$actual" ] || { echo "SHA-256 no coincide para $binary"; exit 1; }
+          done
 
-          if (gh release view $env:RELEASE_VERSION 2>$null) {
-            gh release upload $env:RELEASE_VERSION $zipPath $hashPath --clobber
-            gh release edit $env:RELEASE_VERSION `
-              --title "AerolineaCPP $env:RELEASE_VERSION — Final Portfolio Edition" `
-              --notes-file $notesFile
-          }
-          else {
-            gh release create $env:RELEASE_VERSION $zipPath $hashPath `
-              --target $env:TARGET_SHA `
-              --title "AerolineaCPP $env:RELEASE_VERSION — Final Portfolio Edition" `
-              --notes-file $notesFile
-          }
+          if gh release view "$RELEASE_VERSION" >/dev/null 2>&1 ||
+             git ls-remote --exit-code --tags "https://github.com/$GH_REPO.git" \
+               "refs/tags/$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "La release o el tag $RELEASE_VERSION ya existe; no se reescribe."
+            exit 1
+          fi
+
+          section="$(awk -v v="${RELEASE_VERSION#v}" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md)"
+          if [ -z "$(printf '%s' "$section" | tr -d '[:space:]')" ]; then
+            echo "CHANGELOG.md no tiene una sección para ${RELEASE_VERSION#v}."
+            exit 1
+          fi
+
+          {
+            printf '%s\n\n' "$section"
+            printf '### Descargas\n\n'
+            printf '| Archivo | SHA-256 |\n|---|---|\n'
+            printf '| `%s.exe` (recomendado) | `%s` |\n' "$SETUP_NAME" "$(tr -d '[:space:]' < "assets/$SETUP_NAME.exe.sha256")"
+            printf '| `%s.zip` (portable) | `%s` |\n' "$PACKAGE_NAME" "$(tr -d '[:space:]' < "assets/$PACKAGE_NAME.zip.sha256")"
+            printf '\nCompilado y verificado desde el commit `%s`.\n' "$TARGET_SHA"
+          } > release-notes.md
+
+          title="${RELEASE_TITLE:-AerolineaCPP $RELEASE_VERSION}"
+          gh release create "$RELEASE_VERSION" "${files[@]}" \
+            --target "$TARGET_SHA" \
+            --title "$title" \
+            --notes-file release-notes.md

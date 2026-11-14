@@ -44,3 +44,6 @@ Thumbs.db
 *.bak
 *.tmp
 modern-qt-sqlserver/config/database.ini
+
+# Artefactos de empaquetado local
+dist/

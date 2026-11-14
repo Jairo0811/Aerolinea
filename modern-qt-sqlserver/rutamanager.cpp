@@ -1,7 +1,7 @@
 #include "rutamanager.h"
 
-#include <QHash>
-
+#include <cmath>
+#include <cstdint>
 #include <limits>
 #include <queue>
 #include <vector>
@@ -14,6 +14,9 @@ struct EstadoBusqueda
 {
     QString destino;
     double costo;
+    // Orden de descubrimiento: desempata costos iguales de forma estable e
+    // independiente de la implementación de std::priority_queue.
+    std::uint64_t secuencia;
 };
 
 struct MayorCosto
@@ -21,9 +24,18 @@ struct MayorCosto
     bool operator()(const EstadoBusqueda& izquierda,
                     const EstadoBusqueda& derecha) const
     {
-        return izquierda.costo > derecha.costo;
+        if (izquierda.costo != derecha.costo) {
+            return izquierda.costo > derecha.costo;
+        }
+        return izquierda.secuencia > derecha.secuencia;
     }
 };
+
+// Clave de nodo independiente de mayúsculas/minúsculas.
+QString claveNodo(const QString& nombre)
+{
+    return nombre.toCaseFolded();
+}
 }
 
 RutaManager::RutaManager()
@@ -55,6 +67,21 @@ RutaManager::RutaManager(const QVector<Ruta>& rutas,
     : RutaManager(rutas)
 {
     this->vuelos = vuelos;
+
+    for (const Vuelo& vuelo : vuelos) {
+        if (vuelo.obtenerId() == 0 || !std::isfinite(vuelo.obtenerPrecio()) ||
+            vuelo.obtenerPrecio() < 0.0) {
+            continue;
+        }
+
+        const auto existente = mejorVueloPorRuta.constFind(vuelo.obtenerRutaId());
+        if (existente == mejorVueloPorRuta.cend() ||
+            vuelo.obtenerPrecio() < existente->obtenerPrecio() ||
+            (vuelo.obtenerPrecio() == existente->obtenerPrecio() &&
+             vuelo.obtenerId() < existente->obtenerId())) {
+            mejorVueloPorRuta.insert(vuelo.obtenerRutaId(), vuelo);
+        }
+    }
 }
 
 RutaManager::RutaManager(const QVector<Ruta>& rutas,
@@ -102,13 +129,7 @@ QVector<Ruta> RutaManager::obtenerRutasDesde(const QString& origen) const
 
 Vuelo RutaManager::buscarVueloPorRutaId(int rutaId) const
 {
-    for (const Vuelo& vuelo : vuelos) {
-        if (vuelo.obtenerRutaId() == rutaId) {
-            return vuelo;
-        }
-    }
-
-    return Vuelo();
+    return mejorVueloPorRuta.value(rutaId, Vuelo());
 }
 
 Aeronave RutaManager::buscarAeronavePorId(int aeronaveId) const
@@ -151,30 +172,18 @@ QVector<Ruta> RutaManager::calcularRuta(const QString& origen,
         return vacia;
     }
 
+    const QString claveOrigen = claveNodo(origen);
+    const QString claveDestino = claveNodo(destino);
+
     QHash<QString, double> costos;
     QHash<QString, Ruta> predecesores;
+    costos.insert(claveOrigen, 0.0);
 
-    for (const Destino& item : destinos) {
-        costos.insert(item.obtenerNombre(), INFINITO);
-    }
-
-    QString origenCanonico;
-    QString destinoCanonico;
-    for (const Destino& item : destinos) {
-        if (item.obtenerNombre().compare(origen, Qt::CaseInsensitive) == 0) {
-            origenCanonico = item.obtenerNombre();
-        }
-        if (item.obtenerNombre().compare(destino, Qt::CaseInsensitive) == 0) {
-            destinoCanonico = item.obtenerNombre();
-        }
-    }
-
-    costos[origenCanonico] = 0.0;
-
+    std::uint64_t secuencia = 0;
     std::priority_queue<EstadoBusqueda,
                         std::vector<EstadoBusqueda>,
                         MayorCosto> pendientes;
-    pendientes.push({origenCanonico, 0.0});
+    pendientes.push({claveOrigen, 0.0, secuencia++});
 
     while (!pendientes.empty()) {
         const EstadoBusqueda actual = pendientes.top();
@@ -184,42 +193,43 @@ QVector<Ruta> RutaManager::calcularRuta(const QString& origen,
             continue;
         }
 
-        if (actual.destino == destinoCanonico) {
+        if (actual.destino == claveDestino) {
             break;
         }
 
         for (const Ruta& ruta : obtenerRutasDesde(actual.destino)) {
             const double costoArista = costoTramo(ruta, criterio);
-            if (costoArista == INFINITO) {
+            // Dijkstra exige pesos finitos y no negativos.
+            if (!std::isfinite(costoArista) || costoArista < 0.0) {
                 continue;
             }
 
-            const QString siguiente = ruta.obtenerDestino();
+            const QString siguiente = claveNodo(ruta.obtenerDestino());
             const double nuevoCosto = actual.costo + costoArista;
 
             if (nuevoCosto < costos.value(siguiente, INFINITO)) {
                 costos[siguiente] = nuevoCosto;
                 predecesores.insert(siguiente, ruta);
-                pendientes.push({siguiente, nuevoCosto});
+                pendientes.push({siguiente, nuevoCosto, secuencia++});
             }
         }
     }
 
-    if (!predecesores.contains(destinoCanonico)) {
+    if (!predecesores.contains(claveDestino)) {
         return vacia;
     }
 
     QVector<Ruta> rutaFinal;
-    QString actual = destinoCanonico;
+    QString actual = claveDestino;
 
-    while (actual != origenCanonico) {
-        if (!predecesores.contains(actual)) {
+    while (actual != claveOrigen) {
+        if (!predecesores.contains(actual) || rutaFinal.size() > rutas.size()) {
             return vacia;
         }
 
         const Ruta tramo = predecesores.value(actual);
         rutaFinal.prepend(tramo);
-        actual = tramo.obtenerOrigen();
+        actual = claveNodo(tramo.obtenerOrigen());
     }
 
     return rutaFinal;
