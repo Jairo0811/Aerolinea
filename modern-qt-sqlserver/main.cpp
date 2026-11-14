@@ -14,7 +14,13 @@ int main(int argc, char *argv[])
     application.setOrganizationName(ORG_NAME);
     application.setOrganizationDomain(ORG_DOMAIN);
 
-    application.setWindowIcon(QIcon(":/aerolineacpp_logo.png"));
+    // El .ico embebido contiene tamaños optimizados para barra de tareas y
+    // títulos; el PNG solo se usa si el plugin de imagen ICO no está presente.
+    QIcon applicationIcon(QStringLiteral(":/branding/aerolineacpp.ico"));
+    if (applicationIcon.availableSizes().isEmpty()) {
+        applicationIcon = QIcon(QStringLiteral(":/branding/aerolineacpp.png"));
+    }
+    application.setWindowIcon(applicationIcon);
 
     MainWindow window;
     window.show();

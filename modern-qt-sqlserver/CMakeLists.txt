@@ -38,6 +38,7 @@ qt_add_resources(AerolineaCPP "branding_resources"
     PREFIX "/branding"
     FILES
         aerolineacpp_logo.png
+        aerolineacpp.ico
         itla_logo.png
 )
 qt_add_resources(AerolineaCPP "config_resources"
