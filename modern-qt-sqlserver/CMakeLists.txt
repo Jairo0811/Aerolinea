@@ -18,6 +18,7 @@ qt_add_executable(AerolineaCPP
     ruta.cpp ruta.h
     destino.cpp destino.h
     databasemanager.cpp databasemanager.h
+    configuracionbasedatos.cpp configuracionbasedatos.h
     vuelo.cpp vuelo.h
     aeronave.cpp aeronave.h
 )
@@ -38,6 +39,11 @@ qt_add_resources(AerolineaCPP "branding_resources"
     FILES
         aerolineacpp_logo.png
         itla_logo.png
+)
+qt_add_resources(AerolineaCPP "config_resources"
+    PREFIX "/"
+    FILES
+        config/database.example.ini
 )
 
 if(WIN32)
@@ -97,6 +103,15 @@ if(BUILD_TESTING)
     aerolinea_apply_hardening(AerolineaCPPTests)
 
     add_test(NAME RutaManagerTests COMMAND AerolineaCPPTests)
+
+    qt_add_executable(AerolineaCPPConfigTests
+        tests/configuracion_tests.cpp
+        configuracionbasedatos.cpp configuracionbasedatos.h
+    )
+    target_include_directories(AerolineaCPPConfigTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(AerolineaCPPConfigTests PRIVATE Qt::Core Qt::Test)
+    aerolinea_apply_hardening(AerolineaCPPConfigTests)
+    add_test(NAME ConfiguracionTests COMMAND AerolineaCPPConfigTests)
 endif()
 
 install(TARGETS AerolineaCPP
