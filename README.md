@@ -131,7 +131,7 @@ La publicación es manual (`workflow_dispatch` con `vX.Y.Z`): exige que la versi
 - Windows 10/11 x64.
 - Microsoft SQL Server.
 - Microsoft ODBC Driver 17 u 18 for SQL Server.
-- TLS correctamente configurado para el servidor de base de datos.
+- TLS correctamente configurado para el servidor de base de datos. La conexión cifrada es obligatoria, por lo que **SQL Server LocalDB no es compatible** (no admite cifrado); usa SQL Server Express, Developer o superior.
 
 ### Instalador recomendado
 
