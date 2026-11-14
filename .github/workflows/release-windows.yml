@@ -531,7 +531,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Los artefactos se aplanan al descargarse.
+          # upload-artifact conserva las subcarpetas (installer/); se aplanan
+          # para publicar los cuatro archivos con su nombre final.
+          find assets -mindepth 2 -type f -exec mv -n -t assets {} +
           files=(
             "assets/$PACKAGE_NAME.zip"
             "assets/$PACKAGE_NAME.zip.sha256"
